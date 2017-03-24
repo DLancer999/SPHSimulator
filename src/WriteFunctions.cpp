@@ -1,12 +1,27 @@
 
-#include "WriteFunctions.hpp"
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
 
+\************************************************************************/
+
+
+#include <fstream>
 #include <png.h>
+
+#include "WriteFunctions.hpp"
 
 #include "Particle.hpp"
 #include "Settings.hpp"
 
-void writeGNUfile(std::string fileName, std::vector<Particle>& cloud)
+//********************************************************************************
+void writeRAWfile(std::string fileName, std::vector<Particle>& cloud)
+//********************************************************************************
 {
     static int writeID = 0;
     if      (writeID<10   ) fileName+="0000";
@@ -14,11 +29,11 @@ void writeGNUfile(std::string fileName, std::vector<Particle>& cloud)
     else if (writeID<1000 ) fileName+="00";
     else if (writeID<10000) fileName+="0";
     fileName+=std::to_string(writeID);
-    std::string fileNameGNU = fileName+".gnu";
+    std::string fileNameRAW = fileName+".raw";
     std::string fileNamePNG = fileName+".png";
 
     std::cout<<"#writing file "<<fileName<<std::endl;
-    std::ofstream outfile (fileNameGNU.c_str(),std::ofstream::binary);
+    std::ofstream outfile (fileNameRAW.c_str(),std::ofstream::binary);
     outfile<<"#ID x y u v dens Fpress-x,y Fvisc-x,y Fother-x,y\n";
     
     int NParticles = (int)cloud.size();
@@ -41,24 +56,19 @@ void writeGNUfile(std::string fileName, std::vector<Particle>& cloud)
                <<"\n";                   
     }
     outfile.close();
-    //std::string cmd="cp ";
-    //cmd+=fileNameGNU;
-    //cmd+=" tmp.gnu; gnuplot gnuScript; mv tmp.png ";
-    //cmd+=fileNamePNG+" &";
-    //if(system(cmd.c_str()))
-    //{
-    //    std::cerr<<"system command "<<cmd<<" failed"<<std::endl;
-    //    exit(1);
-    //}
     writeID++;
 }
 
+//********************************************************************************
 glm::ivec3 floatToIntColor(glm::vec3 fCol, int res)
+//********************************************************************************
 {
     return glm::ivec3(fCol*float(res-1));
 }
 
+//********************************************************************************
 void writePNG(std::string fileName, std::vector<glm::vec3>& color)
+//********************************************************************************
 {
     fileName += ".png";
     std::cout<<"#writing file "<<fileName<<std::endl;
@@ -126,7 +136,9 @@ void writePNG(std::string fileName, std::vector<glm::vec3>& color)
     if (row != NULL) free(row);
 }
 
+//********************************************************************************
 void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& neibhs)
+//********************************************************************************
 {
     static int writeID = 0;
 

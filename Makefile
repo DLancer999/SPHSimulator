@@ -3,7 +3,7 @@
 #License
 #    Copyright (c) 2017 Kavvadias Ioannis.
 #    
-#    This file is part of projectMakefile.
+#    This file is part of SPHSimulator.
 #    
 #    Licensed under the MIT License. See LICENSE file in the project root for 
 #    full license information.  
@@ -14,14 +14,16 @@
 #************************************************************************#
 
 #insert project name here
-MYPROGRAM = SPHApp
+MYPROGRAM = SPHSimulator
 
 #objects to be compiled for this project
-OBJ= SPHApp.o \
+OBJ= SPHSimulator.o \
 	Settings.o \
 	SPHSolver.o \
 	Kernels.o \
 	WriteFunctions.o \
+	DisplayView.o \
+	Statistics.o \
 	Shader.o
 
 #libraries to be included and where to find them

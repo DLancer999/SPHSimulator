@@ -1,17 +1,39 @@
+
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+namespace
+    Kernel
+ 
+Description
+    definition of smoothing length and different kernels
+
+SourceFiles
+    Kernels.cpp
+
+\************************************************************************/
+
 #ifndef KERNELS_H
 #define KERNELS_H
 
 #include <glm/glm.hpp>
+
 namespace Kernel
 {
     class SmoothingLength
     {
     public:
-        static double h  ;
-        static double h2 ;
-        static double dh ;
-        static double dh4;
-        static double dh8;
+        static double h  ; //smoothing length
+        static double h2 ; //h*h
+        static double dh ; //1./h
+        static double dh4; //1./(pow(h,4))
+        static double dh8; //1./(pow(h,8))
 
         static void setSmoothingLength(const double);
     };

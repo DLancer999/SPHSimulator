@@ -1,11 +1,31 @@
+
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+Class
+    HashTable
+ 
+Description
+    Class for particle grouping
+
+SourceFiles
+    -
+
+\************************************************************************/
+
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
-#include <math.h>
-#include <memory>
 #include <omp.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+#include <fstream>
 
 #include "Kernels.hpp"
 
@@ -26,21 +46,6 @@ public:
     {
     }
 
-  //HashTable(const glm::dvec2& minPos, const glm::dvec2& dx, const double& h):
-  //particlesIn_(),
-  //minPos_(minPos-glm::dvec2(h)),
-  //gridSize_(0,0)
-  //{
-  //    gridSize_.x = int(floor(dx.x*Kernel::SmoothingLength::dh))+2;
-  //    gridSize_.y = int(floor(dx.y*Kernel::SmoothingLength::dh))+2;
-
-  //    particlesIn_.resize(gridSize_.x);
-  //    for (int i=0;i<gridSize_.x;i++)
-  //    {
-  //        particlesIn_[i].resize(gridSize_.y);
-  //    }
-  //}
-
     void setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
     {
         minPos_ = minPos-glm::dvec2(Kernel::SmoothingLength::h);
@@ -54,9 +59,9 @@ public:
         }
     }
 
-    void writeGridGNU(std::string fileName)
+    void writeGridRAW(std::string fileName)
     {
-        std::string fileNameGNU = fileName+".gnu";
+        std::string fileNameGNU = fileName+".raw";
         std::cout<<"#writing file "<<fileNameGNU<<std::endl;
         std::ofstream outfile (fileNameGNU.c_str(),std::ofstream::binary);
         for (int i=0;i<gridSize_.x;i++)
@@ -77,6 +82,7 @@ public:
         }
         outfile.close();
     }
+
     void write()
     {
         for (int j=gridSize_.y-1;j>=0;j--)
@@ -91,10 +97,10 @@ public:
 
     void clear()
     {
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i=0;i<gridSize_.x;i++)
         {
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int j=0;j<gridSize_.y;j++)
             {
                 if(particlesIn_[i][j].size())
@@ -115,18 +121,20 @@ public:
         return gridPos;
     }
 
-    void findNei(std::vector<Particle>& cloud, const int totParticles)
+    void findNei(std::vector<Particle>& cloud, const int NParticles)
     {
+        //clear lists
         clear();
-#pragma omp parallel for
-        for (int i=0;i<totParticles;i++)
+        #pragma omp parallel for
+        for (int i=0;i<NParticles;i++)
         {
             if(cloud[i].nei.size())
                 cloud[i].nei.clear();
         }
-        for (int i=0;i<totParticles;i++)
+
+        //find grid position of each particle
+        for (int i=0;i<NParticles;i++)
         {
-            if (!cloud[i].active) continue;
             glm::dvec2 pos = cloud[i].position;
             glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
             glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
@@ -138,10 +146,11 @@ public:
             particlesIn_[gridPos.x][gridPos.y].push_back(i);
             cloud[i].gridPos = gridPos;
         }
-#pragma omp parallel for
-        for (int i=0;i<totParticles;i++)
+
+        //find nei of each particle
+        #pragma omp parallel for
+        for (int i=0;i<NParticles;i++)
         {
-            if (!cloud[i].active) continue;
             for (int iGrid=-1;iGrid<2;iGrid++)
             {
                 for (int jGrid=-1;jGrid<2;jGrid++)
@@ -168,6 +177,7 @@ public:
         }
     }
 
+    //return particleList of given grid cell
     std::vector<int>& neiParticlesFor(glm::ivec2 gridPos)
     {
         if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }

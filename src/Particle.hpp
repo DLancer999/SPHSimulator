@@ -1,3 +1,24 @@
+
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+Class
+    Particle 
+ 
+Description
+    All parameters required to set-up simulation
+
+SourceFiles
+    -
+
+\************************************************************************/
+
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
@@ -13,14 +34,13 @@ public:
     glm::dvec2 Fvisc;
     glm::dvec2 Fother;
     glm::dvec2 Ftot;
-    glm::ivec2 gridPos;
+    glm::ivec2 gridPos; //in background grid
     double mass;
     double density;
-    double ddensity;
+    double ddensity;    //1./density
     double densityErr;
     double pressure;
-    bool   active;
-    std::vector<int> nei;
+    std::vector<int> nei; //list of neighbours
 
 public:
     Particle():
@@ -36,23 +56,7 @@ public:
     ddensity(0.0),
     densityErr(0.0),
     pressure(0.0),
-    active(true),
     nei()
-    {}
-};
-
-class ScreenPoint
-{
-public:
-    glm::vec2 position;
-    glm::vec3 color;
-    glm::vec2 force;
-
-public:
-    ScreenPoint():
-    position(0.0f),
-    color(0.0f),
-    force(0.0f)
     {}
 };
 

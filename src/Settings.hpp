@@ -1,3 +1,24 @@
+
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+Class
+    Various Settings classes
+ 
+Description
+    All parameters required to set-up simulation
+
+SourceFiles
+    Settings.cpp
+
+\************************************************************************/
+
 #ifndef SPHSETTINGS_H
 #define SPHSETTINGS_H
 
@@ -15,10 +36,10 @@ public:
     static Solver SPHstep;
     
     //field Particles
-    static int LParticles;
-    static int NParticles;
+    static int LParticles; //used to control particle generation
+    static int NParticles; //total particles
           
-    static double initDx;
+    static double initDx; //initial particle distance
 
     static double particleDensity;
     static double dParticleDensity;
@@ -32,9 +53,10 @@ public:
 class SimulationSettings
 {
 public:
-    static double dt;
-    static double simTimeEnd;
-    static double simTime;
+    static double dt;                //simulation timestep
+    static double simTimeEnd;        //time on which simulation ends
+    static double simTime;           //running time
+    static int    showProgressEvery; //print progress on screen
 
     static void updateSimTime()
     {
@@ -53,23 +75,23 @@ class InitialConditions
 public:
     enum ParticleGeneration
     {
-        ALLIN,
-        FAUCET,
-        DRIPPING
+        ALLIN,    //column of fluid
+        FAUCET,   //tap like flow
+        DRIPPING  //dropplets generation
     };
-    static ParticleGeneration particleGeneration;
-    static glm::dvec2 particleInitPos;
-    static glm::dvec2 particleInitVel;
-    static double     particleGenTime;
+    static ParticleGeneration particleGeneration; //type of particle generation
+    static glm::dvec2 particleInitPos;            //initial particle position
+    static glm::dvec2 particleInitVel;            //initial particle velocity
+    static double     particleGenTime;            //particles generated every ... seconds, used only for DRIPPING scheme
 };
 
 class BoundaryConditions
 {
 public:
     //background grid
-    static BoundingBox<glm::dvec2> bndBox;
-    static double bndCoeff;
-    static double bndConditionRange;
+    static BoundingBox<glm::dvec2> bndBox; //boundary wall box
+    static double bndCoeff;                //multiplier to boundary force
+    static double bndConditionRange;       //range of boundary forces (times h)
 };
 
 //rendering settings
@@ -78,24 +100,22 @@ class RenderSettings
 public:
     enum FileRenderType
     {
-        GNUPLOT,
-        DISCRETE,
-        METABALL
+        RAWDATA,  //write particle attributes to file
+        DISCRETE, //render to png as particles
+        METABALL  //render to png as metaball
     };
     enum DisplayRenderType
     {
-        SIMPLE,
-        PRESSFORCES,
-        VISCFORCES,
-        OTHERFORCES,
-        ALLFORCES
+        SIMPLE,      //render just the particles
+        PRESSFORCES, //render the particles + pressureForce
+        VISCFORCES,  //render the particles + viscForce
+        OTHERFORCES, //render the particles + otherForces
+        ALLFORCES    //render the particles + totalForce
     };
-    static BoundingBox<glm::vec2> displayBox;
-    //static glm::vec3 displayMinPos(float(bndBox.minX()-0.1*bndBox.dx()),  float(   bndBox.minY()-0.1*bndBox.dx()),  0.f);
-    //static glm::vec3 displayMaxPos(float(bndBox.maxX()+0.1*bndBox.dx()),  float(2.*bndBox.maxX()+0.1*bndBox.dx()), 10.f);
-    static int width;
-    static int height;
-    static int printEvr;
+    static BoundingBox<glm::vec2> displayBox; //rendering window
+    static int width;                         //width resolution
+    static int height;                        //height resolution
+    static int printEvr;                      //write file every ... timesteps
     static FileRenderType fileRender;
     static DisplayRenderType displayRender;
 };

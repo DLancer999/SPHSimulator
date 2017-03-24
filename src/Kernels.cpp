@@ -1,15 +1,29 @@
 
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+\************************************************************************/
+
 #include "Kernels.hpp"
 #include <glm/gtx/norm.hpp>
 
-//to be initialized on init() call
+//----------------Kernel Static Variables-----------------//
 double Kernel::SmoothingLength::h   = 0.;
 double Kernel::SmoothingLength::h2  = 0.;
 double Kernel::SmoothingLength::dh  = 0.;
 double Kernel::SmoothingLength::dh4 = 0.;
 double Kernel::SmoothingLength::dh8 = 0.;
+//to be initialized by setSmoothingLength() call
 
+//********************************************************************************
 void Kernel::SmoothingLength::setSmoothingLength(const double smoothingLength)
+//********************************************************************************
 {
     h   = smoothingLength;
     h2  = h*h;
@@ -18,7 +32,9 @@ void Kernel::SmoothingLength::setSmoothingLength(const double smoothingLength)
     dh8 = dh4*dh4;
 }
 
+//********************************************************************************
 double Kernel::poly6::W(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
     double len2 = glm::length2(rij);
@@ -31,7 +47,9 @@ double Kernel::poly6::W(glm::dvec2& xi, glm::dvec2& xj)
     }
 }
 
+//********************************************************************************
 glm::dvec2 Kernel::poly6::gradW(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
     double len2 = glm::length2(rij);
@@ -44,7 +62,9 @@ glm::dvec2 Kernel::poly6::gradW(glm::dvec2& xi, glm::dvec2& xj)
     }
 }
 
+//********************************************************************************
 double Kernel::poly6::laplW(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
     double len2 = glm::length2(rij);
@@ -58,7 +78,9 @@ double Kernel::poly6::laplW(glm::dvec2& xi, glm::dvec2& xj)
     }
 }
 
+//********************************************************************************
 glm::dvec2 Kernel::spiky::gradW(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
     double q = glm::length(rij)*SmoothingLength::dh;
@@ -71,7 +93,9 @@ glm::dvec2 Kernel::spiky::gradW(glm::dvec2& xi, glm::dvec2& xj)
     }
 }
 
+//********************************************************************************
 double Kernel::visc::laplW(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
     double q = glm::length(rij)*SmoothingLength::dh;

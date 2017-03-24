@@ -1,13 +1,30 @@
 
+/*************************************************************************\
+License
+    Copyright (c) 2017 Kavvadias Ioannis.
+    
+    This file is part of SPHSimulator.
+    
+    Licensed under the MIT License. See LICENSE file in the project root for 
+    full license information.  
+
+\************************************************************************/
+
+#include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
+
 #include "SPHSolver.hpp"
 #include "WriteFunctions.hpp"
+#include "Settings.hpp"
+#include "Statistics.hpp"
 
-#include <chrono>
-
+//********************************************************************************
 void SPHSolver::init()
+//********************************************************************************
 {
     neibhs_.setHashTable(BoundaryConditions::bndBox.minPos(),BoundaryConditions::bndBox.delta());
-    //neibhs_.writeGridGNU("neiGrid");
+    //neibhs_.writeGridRAW("neiGrid");
 
     cloud_.resize(SPHSettings::NParticles);
 
@@ -64,18 +81,15 @@ void SPHSolver::init()
     }
     else
     {
-        for (int i=0;i<SPHSettings::NParticles;i++)
-        {
-            cloud_[i].active = false;
-        }
+        //particles will be generated in generateParticles()
     }
 
-    neibhs_.findNei(cloud_, SPHSettings::NParticles);
+    neibhs_.findNei(cloud_, activeParticles_);
     calcDensity();
 
-    if (RenderSettings::fileRender==RenderSettings::GNUPLOT)
+    if (RenderSettings::fileRender==RenderSettings::RAWDATA)
     {
-        writeGNUfile("step", cloud_);
+        writeRAWfile("step", cloud_);
     }
     else
     {
@@ -83,51 +97,72 @@ void SPHSolver::init()
     }
 }
 
+//********************************************************************************
 void SPHSolver::WCSPHStep() 
+//********************************************************************************
 {
-    calcDensity();
-    calcPressure();
-    
+    static int densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::WCSPH::densCalcTimer  ");
+    static int pressCalcTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::pressCalcTimer ");
+    static int pressForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::pressForceTimer");
+    static int viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::viscForceTimer ");
+    static int otherForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::otherForceTimer");
+    static int updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::updatePosTimer ");
+
+    COUNT_TIME(calcDensity(), densCalcTimerID);
+    COUNT_TIME(calcPressure(),pressCalcTimerID);
+
     //calc forces
-    calcPressForces();
-    calcViscForces();
-    calcOtherForces();
+    COUNT_TIME(calcPressForces(), pressForceTimerID);
+    COUNT_TIME(calcViscForces(),  viscForceTimerID);
+    COUNT_TIME(calcOtherForces(), otherForceTimerID);
 
     //combine forces and update values
+    Statistics::timers[updatePosTimerID].start();
     #pragma omp parallel for
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
-        if (!cloud_[iPart].active) continue;
         cloud_[iPart].Ftot = cloud_[iPart].Fpress+cloud_[iPart].Fvisc+cloud_[iPart].Fother;
 
         cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
         cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
     }
+    Statistics::timers[updatePosTimerID].end();
+    Statistics::timers[updatePosTimerID].addTime();
 }
 
+//********************************************************************************
 void SPHSolver::PCISPHStep() 
+//********************************************************************************
 {
-    calcDensity();
-    //calcPressure();
+    static int densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::PCISPH::densCalcTimer  ");
+    static int viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::viscForceTimer ");
+    static int otherForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::otherForceTimer");
+    static int pressForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::pressForceTimer");
+    static int updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::updatePosTimer ");
+
+    COUNT_TIME(calcDensity(), densCalcTimerID);
     
     //calc forces
-    calcViscForces();
-    calcOtherForces();
-    //calcPressForces();
+    COUNT_TIME(calcViscForces(),  viscForceTimerID);
+    COUNT_TIME(calcOtherForces(), otherForceTimerID);
 
+    Statistics::timers[updatePosTimerID].start();
     #pragma omp parallel for
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
-        if (!cloud_[iPart].active) continue;
         cloud_[iPart].Ftot = cloud_[iPart].Fvisc+cloud_[iPart].Fother;
 
         cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
         cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
     }
+    Statistics::timers[updatePosTimerID].end();
+    Statistics::timers[updatePosTimerID].addTime();
 
-    double densErr=1000001.;
+    double densErr=SPHSettings::particleDensity;
     int iter=0;
 
+    //calculate pressure and pressure force
+    Statistics::timers[pressForceTimerID].start();
     initPressure();
     const double targetDensErr = SPHSettings::densityErr*SPHSettings::particleDensity;
     while(densErr>targetDensErr && iter<500)
@@ -137,46 +172,51 @@ void SPHSolver::PCISPHStep()
         updatePressure();
 
         densErr = 0.;
-        for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+        for (int iPart = 0;iPart<activeParticles_;iPart++) 
         {
-            if (!cloud_[iPart].active) continue;
             if (densErr<cloud_[iPart].densityErr)
                 densErr = cloud_[iPart].densityErr;
         }
 
         if (iter==0)
-        //std::cout<<"densErrInit="<<densErr;
         iter++;
 
         calcPressForces();
-          //glm::dvec2 Ftot = Fpress[iPart]+Fvisc[iPart]+Fother[iPart];
-          //cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
         //#pragma omp parallel for
-        for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+        for (int iPart = 0;iPart<activeParticles_;iPart++) 
         {
-            if (!cloud_[iPart].active) continue;
-            cloud_[iPart].Ftot = cloud_[iPart].Fpress;
+            Particle& iParticle = cloud_[iPart];
+            iParticle.Ftot = iParticle.Fpress;
 
-            glm::dvec2 update = SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
-            cloud_[iPart].velocity += update;
-            cloud_[iPart].position += SimulationSettings::dt*update;
+            glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Ftot;
+            iParticle.velocity += update;
+            iParticle.position += SimulationSettings::dt*update;
         }
     }
-    //std::cout<<" densErrFinal="<<densErr<<" iter="<<iter<<std::endl;
+    Statistics::timers[pressForceTimerID].end();
+    Statistics::timers[pressForceTimerID].addTime();
 }
 
-void SPHSolver::step(GLFWwindow* window) 
+//********************************************************************************
+bool SPHSolver::step() 
+//********************************************************************************
 {
+    static int neibTimerID = Statistics::createTimer("SPHSolver::Step::neibTime");
+    static int stepTimerID = Statistics::createTimer("SPHSolver::Step::SPHsolver");
+
     generateParticles();
-    neibhs_.findNei(cloud_, SPHSettings::NParticles);
+
+    COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), neibTimerID);
+
+    Statistics::timers[stepTimerID].start();
     switch (SPHSettings::SPHstep)
     {
-        case SPHSettings::Solver::WCSPH:
+        case (SPHSettings::Solver::WCSPH):
         {
             WCSPHStep();
             break;
         }
-        case SPHSettings::Solver::PCISPH:
+        case (SPHSettings::Solver::PCISPH):
         {
             PCISPHStep();
             break;
@@ -187,75 +227,17 @@ void SPHSolver::step(GLFWwindow* window)
             exit(1);
         }
     }
-
-    double vMax = 0.0;
-    double tMax = 0.0;
-
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
-    {
-        if (!cloud_[iPart].active) continue;
-        double vLen2 = glm::length2(cloud_[iPart].velocity);
-        if (vLen2 > vMax) vMax = vLen2;
-        tMax+=vLen2;
-    }
-
-    
-    double maxDt = 0.4*Kernel::SmoothingLength::h/(sqrt(vMax)+1.e-5);
-    double CFL = SimulationSettings::dt/maxDt;
-
-    static int iStep=0;
-    static int printStep=0;
-    static std::chrono::time_point<std::chrono::system_clock> codeStart = std::chrono::system_clock::now();
-    static std::chrono::time_point<std::chrono::system_clock> start     = std::chrono::system_clock::now();
-    static std::chrono::time_point<std::chrono::system_clock> now       = std::chrono::system_clock::now();
-    static std::chrono::duration<double> deltaTime =std::chrono::duration<double>(0.0);
-
     SimulationSettings::updateSimTime();
-    iStep++;
-    printStep++;
-    now = std::chrono::system_clock::now();
-    deltaTime = now - start;
 
-    if (SimulationSettings::breakLoop()) 
-    {
-	    if (!glfwWindowShouldClose(window))
-        {
-            now = std::chrono::system_clock::now();
-            deltaTime = now - codeStart;
-            double dTime =  deltaTime.count();
-            std::cout<<"SimulationTime="<<SimulationSettings::simTime<<"\n"
-                     <<"compTime      ="<<dTime<<"\n"
-                     <<"nSteps        ="<<printStep<<"\n"
-                     <<"dt            ="<<SimulationSettings::dt<<"\n"
-                     <<"timePerStep   ="<<dTime/printStep<<"\n"
-                     <<"simTimePerSec ="<<SimulationSettings::simTime/dTime<<std::endl;
-            glfwSetWindowShouldClose(window, GL_TRUE);
-        }
-    }
-    
-    if (deltaTime.count()>1.)
-    {
-        std::string winName = "time="+std::to_string(SimulationSettings::simTime)+" CFL="+std::to_string(CFL)+" nStep="+std::to_string(iStep)+" tVel="+std::to_string(tMax);
-        //glutSetWindowTitle(winName.c_str());
-        glfwSetWindowTitle(window, winName.c_str());
-        start = std::chrono::system_clock::now();
-        iStep = 0;
-    }
+    Statistics::timers[stepTimerID].end();
+    Statistics::timers[stepTimerID].addTime();
 
-    if (printStep%RenderSettings::printEvr==0)
-    {
-        if (RenderSettings::fileRender==RenderSettings::GNUPLOT)
-        {
-            writeGNUfile("step", cloud_);
-        }
-        else
-        {
-            renderImage("render", cloud_, neibhs_);
-        }
-    }
+    return (!SimulationSettings::breakLoop());
 }
 
+//********************************************************************************
 void SPHSolver::generateParticles()
+//********************************************************************************
 {
     static double genTime = 0;
     static double dtGenFaucet = 0.5*Kernel::SmoothingLength::h
@@ -278,7 +260,6 @@ void SPHSolver::generateParticles()
                         cloud_[activeParticles_].position = InitialConditions::particleInitPos + glm::dvec2(0,SPHSettings::initDx*i);
                         cloud_[activeParticles_].velocity = InitialConditions::particleInitVel;
                         cloud_[activeParticles_].mass     = SPHSettings::particleMass;
-                        cloud_[activeParticles_].active = true;
                         activeParticles_++;
                     }
                 }
@@ -308,7 +289,6 @@ void SPHSolver::generateParticles()
                             cloud_[activeParticles_].position = pos;
                             cloud_[activeParticles_].velocity = InitialConditions::particleInitVel;
                             cloud_[activeParticles_].mass     = SPHSettings::particleMass;
-                            cloud_[activeParticles_].active = true;
                             activeParticles_++;
                         }
                     }
@@ -326,86 +306,85 @@ void SPHSolver::generateParticles()
     }
 }
 
+//********************************************************************************
 void SPHSolver::calcDensity()
+//********************************************************************************
 {
-  //for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
-#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
+        Particle& iParticle = cloud_[iPart];
+
         double dens = 0.0;
 
-        //double tmpValue = cloud_[iPart].pressure/(cloud_[iPart].density*cloud_[iPart].density);
-        int Nnei = (int)cloud_[iPart].nei.size();
+        int Nnei = (int)iParticle.nei.size();
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = cloud_[iPart].nei[i];
+            int neiPart = iParticle.nei[i];
             Particle& neiParticle = cloud_[neiPart];
 
-            double Wij = Kernel::poly6::W(cloud_[iPart].position,neiParticle.position);
+            double Wij = Kernel::poly6::W(iParticle.position,neiParticle.position);
             dens += neiParticle.mass*Wij;
         }
-        cloud_[iPart].density = dens;
-        cloud_[iPart].ddensity = 1./dens;
+        iParticle.density = dens;
+        iParticle.ddensity = 1./dens;
     }
 }
 
+//********************************************************************************
 void SPHSolver::calcDensityErr()
+//********************************************************************************
 {
-  //for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
-#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
         cloud_[iPart].densityErr = cloud_[iPart].density - SPHSettings::particleDensity;
     }
 }
 
+//********************************************************************************
 void SPHSolver::initPressure()
+//********************************************************************************
 {
-  //for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
-#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
         cloud_[iPart].pressure = 0.0;
     }
 }
 
+//********************************************************************************
 void SPHSolver::calcPressure()
+//********************************************************************************
 {
-#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
         //p = k(rho-rho0)
         cloud_[iPart].pressure = fmax(SPHSettings::stiffness*(cloud_[iPart].density-SPHSettings::particleDensity),0.0);
-      //cloud_[iPart].pressure = SPHSettings::stiffness*(cloud_[iPart].density-SPHSettings::particleDensity);
-        //p = K((rho/rho0)-1)
-      //double tmp = cloud_[iPart].density*SPHSettings::dParticleDensity;
-      //double tmp2 = tmp*tmp*tmp*tmp*tmp*tmp*tmp;
-      //cloud_[iPart].pressure = fmax(1./7.*SPHSettings::stiffness*SPHSettings::particleDensity*(tmp2-1.),0.);
-      //cloud_[iPart].pressure = 1./7.*SPHSettings::stiffness*SPHSettings::particleDensity*(tmp2-1.);
+      //cloud_[iPart].pressure =      SPHSettings::stiffness*(cloud_[iPart].density-SPHSettings::particleDensity);
     }
 }
 
+//********************************************************************************
 void SPHSolver::updatePressure()
+//********************************************************************************
 {
-#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
         cloud_[iPart].pressure = 1.*fmax(delta_*cloud_[iPart].densityErr,0.0);
     }
 }
 
 
+//********************************************************************************
 void SPHSolver::calcOtherForces()
+//********************************************************************************
 {
-//#pragma omp parallel for
-    for (int iPart=0;iPart<SPHSettings::NParticles;iPart++)
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        if (!cloud_[iPart].active) continue;
         //gravity
         cloud_[iPart].Fother = SPHSettings::grav;
 
@@ -473,20 +452,22 @@ void SPHSolver::calcOtherForces()
                 cloud_[iPart].Fother.y-=BoundaryConditions::bndCoeff*W0;
             }
         }
-      //cloud_[iPart].Fother+=BoundaryConditions::bndCoeff*Kernel::poly6::W(tmpiPos,bndPos)*glm::normalize(tmpiPos-bndPos);
 
         cloud_[iPart].Fother*= cloud_[iPart].density;
     }
 }
 
+//********************************************************************************
 void SPHSolver::calcPressForces()
+//********************************************************************************
 {
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+    #pragma omp parallel for
+    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
-        if (!cloud_[iPart].active) continue;
+        Particle& iParticle = cloud_[iPart];
+
         glm::dvec2 Fp = glm::dvec2(0.0);
 
-        Particle& iParticle = cloud_[iPart];
         int Nnei = (int)cloud_[iPart].nei.size();
         for (int i = 0; i<Nnei;i++)
         {
@@ -506,14 +487,17 @@ void SPHSolver::calcPressForces()
     }
 }
 
+//********************************************************************************
 void SPHSolver::calcViscForces()
+//********************************************************************************
 {
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+    #pragma omp parallel for
+    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
         glm::dvec2 Fv = glm::dvec2(0.0);
 
         Particle& iParticle = cloud_[iPart];
-        //double tmpValue = cloud_[iPart].pressure/(cloud_[iPart].density*cloud_[iPart].density);
+
         int Nnei = (int)cloud_[iPart].nei.size();
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
         for (int i = 0; i<Nnei;i++)
@@ -532,4 +516,21 @@ void SPHSolver::calcViscForces()
 
         cloud_[iPart].Fvisc= Fv;
     }
+}
+
+//********************************************************************************
+double SPHSolver::calcCFL()
+//********************************************************************************
+{
+    double vMax = 0.0;
+
+    for (int iPart = 0;iPart<activeParticles_;iPart++) 
+    {
+        double vLen2 = glm::length2(cloud_[iPart].velocity);
+        if (vLen2 > vMax) vMax = vLen2;
+    }
+
+    double maxDt = 0.4*Kernel::SmoothingLength::h/(sqrt(vMax)+1.e-5);
+    double CFL = SimulationSettings::dt/maxDt;
+    return CFL;
 }
