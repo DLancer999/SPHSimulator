@@ -44,6 +44,11 @@ void DisplayView::keyboard(GLFWwindow* window, int key, int scancode, int action
             }
             else if (RenderSettings::displayRender==RenderSettings::VISCFORCES)
             {
+                RenderSettings::displayRender=RenderSettings::SURFFORCES;
+                glfwSetWindowTitle(window, "Visualization of surface forces");
+            }
+            else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
+            {
                 RenderSettings::displayRender=RenderSettings::OTHERFORCES;
                 glfwSetWindowTitle(window, "Visualization of other forces");
             }
@@ -250,6 +255,17 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
             }
 
             glUniform3f(colorLoc, 0.0f, 1.0f, 1.0f);
+        }
+        else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
+        {
+            #pragma omp parallel for
+            for (int iPart = 0;iPart<NParticles;iPart++) 
+            {
+                sForce_[iPart] = cloud[iPart].Fsurf;
+              //sForce_[iPart] = cloud[iPart].normal;
+            }
+
+            glUniform3f(colorLoc, 1.0f, 0.0f, 1.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::OTHERFORCES)
         {

@@ -17,7 +17,9 @@ License
 double Kernel::SmoothingLength::h   = 0.;
 double Kernel::SmoothingLength::h2  = 0.;
 double Kernel::SmoothingLength::dh  = 0.;
+double Kernel::SmoothingLength::dh2 = 0.;
 double Kernel::SmoothingLength::dh4 = 0.;
+double Kernel::SmoothingLength::dh6 = 0.;
 double Kernel::SmoothingLength::dh8 = 0.;
 //to be initialized by setSmoothingLength() call
 
@@ -28,7 +30,9 @@ void Kernel::SmoothingLength::setSmoothingLength(const double smoothingLength)
     h   = smoothingLength;
     h2  = h*h;
     dh  = 1.0/h;
-    dh4 = dh*dh*dh*dh;
+    dh2 = dh*dh;
+    dh4 = dh2*dh2;
+    dh6 = dh4*dh2;
     dh8 = dh4*dh4;
 }
 
@@ -104,5 +108,28 @@ double Kernel::visc::laplW(glm::dvec2& xi, glm::dvec2& xj)
     {
         double tmp = 1.-q;
         return 40.*glm::one_over_pi<double>()*SmoothingLength::dh4*tmp;
+    }
+}
+
+//********************************************************************************
+double Kernel::surface::C(glm::dvec2& xi, glm::dvec2& xj)
+//********************************************************************************
+{
+    glm::dvec2 rij = xi - xj;
+    double q = glm::length(rij)*SmoothingLength::dh;
+    if (q>=1. || q<0.0) return 0.0;
+    else 
+    {
+        double tmp = 1.-q;
+        double f1 = tmp*tmp*tmp*q*q*q;
+        double mult = 32.*glm::one_over_pi<double>()*SmoothingLength::dh2;
+        if (q>0.5)
+        {
+            return mult*f1;
+        }
+        else
+        {
+            return mult*(2.*f1-1./64.);
+        }
     }
 }

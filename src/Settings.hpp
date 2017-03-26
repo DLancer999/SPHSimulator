@@ -47,6 +47,7 @@ public:
     static double stiffness;
     static double densityErr;
     static double viscosity;
+    static double surfTension;
     static glm::dvec2 grav;
 };
 
@@ -109,6 +110,7 @@ public:
         SIMPLE,      //render just the particles
         PRESSFORCES, //render the particles + pressureForce
         VISCFORCES,  //render the particles + viscForce
+        SURFFORCES,  //render the particles + surfForce
         OTHERFORCES, //render the particles + otherForces
         ALLFORCES    //render the particles + totalForce
     };

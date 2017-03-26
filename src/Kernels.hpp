@@ -32,7 +32,9 @@ namespace Kernel
         static double h  ; //smoothing length
         static double h2 ; //h*h
         static double dh ; //1./h
+        static double dh2; //1./(pow(h,2))
         static double dh4; //1./(pow(h,4))
+        static double dh6; //1./(pow(h,6))
         static double dh8; //1./(pow(h,8))
 
         static void setSmoothingLength(const double);
@@ -51,6 +53,10 @@ namespace Kernel
     namespace visc
     {
         double laplW(glm::dvec2& xi, glm::dvec2& xj);
+    }
+    namespace surface
+    {
+        double C(glm::dvec2& xi, glm::dvec2& xj);
     }
 }
 

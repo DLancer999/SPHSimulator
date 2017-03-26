@@ -13,11 +13,11 @@ License
 #include "Settings.hpp"
 
 //----------------SPHSettings-----------------//
-SPHSettings::Solver SPHSettings::SPHstep = SPHSettings::Solver::WCSPH;
+SPHSettings::Solver SPHSettings::SPHstep = SPHSettings::Solver::PCISPH;
 
 //field Particles
-int SPHSettings::LParticles = 30;
-int SPHSettings::NParticles = 2000;
+int SPHSettings::LParticles = 8;
+int SPHSettings::NParticles = 5000;
       
 double SPHSettings::initDx = 0.02;
 
@@ -26,12 +26,14 @@ double     SPHSettings::dParticleDensity = 1.0/particleDensity;
 double     SPHSettings::particleMass = particleDensity*initDx*initDx*0.98;
 double     SPHSettings::stiffness  = 1000.;// for WCSPH
 double     SPHSettings::densityErr = 0.01; // for PCISPH - %
-double     SPHSettings::viscosity = 10;   
+double     SPHSettings::viscosity = 5.;   
+double     SPHSettings::surfTension = 0.2;
 glm::dvec2 SPHSettings::grav = glm::dvec2(0.0,-1.e1);
+//glm::dvec2 SPHSettings::grav = glm::dvec2(0.0,0.e1);
 
 //----------------SimulationSettings-----------------//
-double SimulationSettings::dt         = 5e-5;
-double SimulationSettings::simTimeEnd = 5;
+double SimulationSettings::dt         = 1e-3;
+double SimulationSettings::simTimeEnd = 20;
 double SimulationSettings::simTime    = 0.0;
 int    SimulationSettings::showProgressEvery = 20000;
 
@@ -39,13 +41,13 @@ int    SimulationSettings::showProgressEvery = 20000;
 InitialConditions::ParticleGeneration 
     InitialConditions::particleGeneration = InitialConditions::DRIPPING;
 double     InitialConditions::particleGenTime = 1.; //for DRIPPING only
-glm::dvec2 InitialConditions::particleInitVel = glm::dvec2(0.00,-0.00);
-glm::dvec2 InitialConditions::particleInitPos = glm::dvec2(0.32,0.92);
+glm::dvec2 InitialConditions::particleInitVel = glm::dvec2(0.00,0.00);
+glm::dvec2 InitialConditions::particleInitPos = glm::dvec2(0.25,1.65);
 
 //----------------BoundaryConditions-----------------//
 BoundingBox<glm::dvec2> BoundaryConditions::bndBox(glm::dvec2(0.0,0.0),glm::dvec2(1.0,5.0));
-double                  BoundaryConditions::bndCoeff = 1.;
-double                  BoundaryConditions::bndConditionRange = 3.0;
+double                  BoundaryConditions::bndCoeff = .5;
+double                  BoundaryConditions::bndConditionRange = 2.0;
 
 
 //----------------RenderSettings-----------------//
@@ -65,6 +67,7 @@ BoundingBox<glm::vec2> RenderSettings::displayBox
 
 int RenderSettings::width  = 512;
 int RenderSettings::height = 1024;
-int RenderSettings::printEvr= 100000; //print to file
+int RenderSettings::printEvr= 16000; //print to file
 RenderSettings::FileRenderType    RenderSettings::fileRender= RenderSettings::DISCRETE;
-RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SIMPLE;
+//RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SIMPLE;
+RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SURFFORCES;
