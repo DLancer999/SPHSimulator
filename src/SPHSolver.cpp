@@ -213,10 +213,27 @@ void SPHSolver::PCISPHStep()
 bool SPHSolver::step() 
 //********************************************************************************
 {
+    static int reorTimerID = Statistics::createTimer("SPHSolver::Step::reorTime");
     static int neibTimerID = Statistics::createTimer("SPHSolver::Step::neibTime");
     static int stepTimerID = Statistics::createTimer("SPHSolver::Step::SPHsolver");
 
+    static int iReorder = 0;
+    iReorder++;
+
+    #pragma omp parallel for
+    for (int i=0;i<activeParticles_;i++)
+    {
+        if(cloud_[i].nei.size())
+            cloud_[i].nei.clear();
+    }
     generateParticles();
+
+    if(iReorder%200==0)
+    {
+        COUNT_TIME(neibhs_.reorderCloud(cloud_,activeParticles_), reorTimerID);
+    }
+
+    neibhs_.clear();
 
     COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), neibTimerID);
 

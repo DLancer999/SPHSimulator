@@ -13,6 +13,7 @@ Class
  
 Description
     Class for particle grouping
+    -- Not actual hast table yet... just AABB background grid
 
 SourceFiles
     -
@@ -26,21 +27,45 @@ SourceFiles
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 #include <fstream>
+#include <algorithm>
 
 #include "Kernels.hpp"
 
+typedef std::vector< std::vector< int > > ZIndex;
+typedef std::vector< glm::ivec2 > ZMap;
 typedef std::vector< std::vector< std::vector<int> > > grid;
 
 class HashTable
 {
+public:
+    static int JoinBits(int a, int b) 
+    {
+        long int result = 0;
+        for(int ii = 8; ii >= 0; ii--)
+        {
+            result |= (a >> ii) & 1;
+            result <<= 1;
+            result |= (b >> ii) & 1;
+            if(ii != 0){
+                result <<= 1;
+            }
+        }
+        return (int)result;
+    }
+    
+
 private:
-    grid  particlesIn_;
+    grid   particlesIn_;
+    ZIndex gridZindex_;
+    ZMap   gridZMap_;
     glm::dvec2 minPos_;
     glm::ivec2 gridSize_;
 
 public:
     HashTable():
     particlesIn_(),
+    gridZindex_(),
+    gridZMap_(),
     minPos_(0.0),
     gridSize_(0,0)
     {
@@ -57,6 +82,49 @@ public:
         {
             particlesIn_[i].resize(gridSize_.y);
         }
+
+        std::cout<<"gridSize="<<gridSize_.x<<" "<<gridSize_.y<<std::endl;
+        int ZMapSize = std::max(gridSize_.x,gridSize_.y);
+        int pow2 = 0;
+        std::cout<<"Bef-ZmapSize="<<ZMapSize<<std::endl;
+        while (ZMapSize>0)
+        {
+            ZMapSize>>=1;
+            pow2++;
+        }
+        ZMapSize=1;
+        for (int i=0;i<pow2;i++) ZMapSize<<=1;
+        std::cout<<"Aft-ZmapSize="<<ZMapSize<<std::endl;
+        ZMapSize*=ZMapSize;
+
+        gridZMap_.resize(ZMapSize);
+        for (int i=0;i<ZMapSize;i++) gridZMap_[i] = glm::ivec2(-1,-1);
+
+        gridZindex_.resize(gridSize_.x);
+        for (int i=0;i<gridSize_.x;i++)
+        {
+            gridZindex_[i].resize(gridSize_.y);
+            for (int j=0;j<gridSize_.y;j++)
+            {
+                int Zindex = JoinBits(i,j);
+                gridZindex_[i][j]=Zindex;
+                gridZMap_[Zindex] = glm::ivec2(i,j);
+            }
+        }
+
+      //for (int i=0;i<gridSize_.x;i++)
+      //{
+      //    for (int j=0;j<gridSize_.y;j++)
+      //    {
+      //        std::cout<<gridZindex_[i][j]<<"\t";
+      //    }
+      //    std::cout<<std::endl;
+      //}
+
+      //for (int i=0;i<ZMapSize;i++)
+      //{
+      //    std::cout<<gridZMap_[i].x<<" "<<gridZMap_[i].y<<std::endl;
+      //}
     }
 
     void writeGridRAW(std::string fileName)
@@ -123,15 +191,6 @@ public:
 
     void findNei(std::vector<Particle>& cloud, const int NParticles)
     {
-        //clear lists
-        clear();
-        #pragma omp parallel for
-        for (int i=0;i<NParticles;i++)
-        {
-            if(cloud[i].nei.size())
-                cloud[i].nei.clear();
-        }
-
         //find grid position of each particle
         for (int i=0;i<NParticles;i++)
         {
@@ -175,6 +234,31 @@ public:
                 }
             }
         }
+    }
+
+    void reorderCloud(std::vector<Particle>& cloud, const int NParticles)
+    {
+        std::vector<Particle> newCloud(NParticles);
+        std::vector<int>      oldToNewMap;
+
+        const int NZcells = (int)gridZMap_.size();
+        for (int iZ=0;iZ<NZcells;iZ++)
+        {
+            glm::ivec2 gridPos = gridZMap_[iZ];
+            if (gridPos.x<0) continue;
+            const int NPartsInCell = (int)particlesIn_[gridPos.x][gridPos.y].size();
+            for (int iPart=0;iPart<NPartsInCell;iPart++)
+            {
+                oldToNewMap.push_back(particlesIn_[gridPos.x][gridPos.y][iPart]);
+            }
+        }
+
+        for (int iPart=0;iPart<NParticles;iPart++)
+        {
+            newCloud[iPart] = cloud[oldToNewMap[iPart]];
+        }
+
+        cloud = newCloud;
     }
 
     //return particleList of given grid cell

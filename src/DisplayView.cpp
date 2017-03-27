@@ -32,7 +32,12 @@ void DisplayView::keyboard(GLFWwindow* window, int key, int scancode, int action
     {
         if (action == GLFW_PRESS)
         {
-            if (RenderSettings::displayRender==RenderSettings::SIMPLE)
+            if (RenderSettings::displayRender==RenderSettings::INDEX)
+            {
+                RenderSettings::displayRender=RenderSettings::SIMPLE;
+                glfwSetWindowTitle(window, "Color-based Visualization");
+            }
+            else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
             {
                 RenderSettings::displayRender=RenderSettings::PRESSFORCES;
                 glfwSetWindowTitle(window, "Visualization of pressure forces");
@@ -59,8 +64,8 @@ void DisplayView::keyboard(GLFWwindow* window, int key, int scancode, int action
             }
             else if (RenderSettings::displayRender==RenderSettings::ALLFORCES)
             {
-                RenderSettings::displayRender=RenderSettings::SIMPLE;
-                glfwSetWindowTitle(window, "Force visualization - disabled");
+                RenderSettings::displayRender=RenderSettings::INDEX;
+                glfwSetWindowTitle(window, "Index-based visualization");
             }
         }
         break;
@@ -164,7 +169,7 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     glEnable(GL_PROGRAM_POINT_SIZE);
 
     // set clear color
-    glClearColor( 0.1f, 0.1f, 0.1f, 1.0f );
+    glClearColor( 0.2f, 0.2f, 0.0f, 1.0f );
 
     // enable vsync
     glfwSwapInterval(1);
@@ -197,15 +202,28 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
     {
         sPosition_[iPart] = cloud[iPart].position;
 
-        float velMag = float(glm::length(cloud[iPart].velocity));
-        float scale = 0.2f;
-        //blue to white
-        sColor_[iPart] = glm::vec3
-        (
-            scale*velMag,
-            scale*velMag, 
-            scale*velMag*0.3f+0.7
-        );
+        if (RenderSettings::displayRender==RenderSettings::INDEX)
+        {
+            float clr = float(iPart)/float(SPHSettings::NParticles-1);
+            sColor_[iPart] = glm::vec3
+            (
+                clr,
+                clr,
+                clr
+            );
+        }
+        else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
+        {
+            float velMag = float(glm::length(cloud[iPart].velocity));
+            float scale = 0.2f;
+            //blue to white
+            sColor_[iPart] = glm::vec3
+            (
+                scale*velMag,
+                scale*velMag, 
+                scale*velMag*0.3f+0.7
+            );
+        }
     }
 
     particleShader_.use();
@@ -227,7 +245,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
     glDrawArrays(GL_POINTS, 0, SPHSettings::NParticles);
     glBindVertexArray(0);
 
-    if (RenderSettings::displayRender!=RenderSettings::SIMPLE)
+    if (RenderSettings::displayRender>RenderSettings::SIMPLE)
     {
         forceShader_.use();
 

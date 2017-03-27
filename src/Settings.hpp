@@ -107,7 +107,8 @@ public:
     };
     enum DisplayRenderType
     {
-        SIMPLE,      //render just the particles
+        INDEX,       //render just the particles with index coloring
+        SIMPLE,      //render just the particles with velocity coloring
         PRESSFORCES, //render the particles + pressureForce
         VISCFORCES,  //render the particles + viscForce
         SURFFORCES,  //render the particles + surfForce
