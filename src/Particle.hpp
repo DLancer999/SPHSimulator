@@ -30,6 +30,7 @@ class Particle
 public:
     glm::dvec2 position;
     glm::dvec2 velocity;
+    glm::dvec2 normal;
     glm::dvec2 Fpress;
     glm::dvec2 Fvisc;
     glm::dvec2 Fsurf;
@@ -41,15 +42,13 @@ public:
     double ddensity;    //1./density
     double densityErr;
     double pressure;
-    double color;
-    glm::dvec2 normal;
-    double laplColor;
     std::vector<int> nei; //list of neighbours
 
 public:
     Particle():
     position(-100.0),
     velocity(0.0),
+    normal(0.0),
     Fpress(0.0),
     Fvisc(0.0),
     Fsurf(0.0),
@@ -61,9 +60,6 @@ public:
     ddensity(0.0),
     densityErr(0.0),
     pressure(0.0),
-    color(0.0),
-    normal(0.0),
-    laplColor(0.0),
     nei()
     {}
 };

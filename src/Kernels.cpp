@@ -46,9 +46,17 @@ double Kernel::poly6::W(glm::dvec2& xi, glm::dvec2& xj)
     else 
     {
         double tmp = SmoothingLength::h2-len2;
-        return 4.*glm::one_over_pi<double>()
-                 *SmoothingLength::dh8*tmp*tmp*tmp;
+        return tmp*tmp*tmp;
     }
+}
+
+//********************************************************************************
+double Kernel::poly6::W_coeff()
+//********************************************************************************
+{
+    static double coeff = 4.*glm::one_over_pi<double>()*SmoothingLength::dh8;
+
+    return coeff;
 }
 
 //********************************************************************************
@@ -61,9 +69,17 @@ glm::dvec2 Kernel::poly6::gradW(glm::dvec2& xi, glm::dvec2& xj)
     else 
     {
         double tmp = SmoothingLength::h2-len2;
-        return -24.*glm::one_over_pi<double>()
-               *SmoothingLength::dh8*tmp*tmp*rij;
+        return tmp*tmp*rij;
     }
+}
+
+//********************************************************************************
+double Kernel::poly6::gradW_coeff()
+//********************************************************************************
+{
+    static double coeff = -24.*glm::one_over_pi<double>()*SmoothingLength::dh8;
+
+    return coeff;
 }
 
 //********************************************************************************
@@ -75,11 +91,17 @@ double Kernel::poly6::laplW(glm::dvec2& xi, glm::dvec2& xj)
     if (len2>=SmoothingLength::h2 || len2<0.0) return 0.0;
     else 
     {
-        return -48.*glm::one_over_pi<double>()
-                   *SmoothingLength::dh8
-                   *(SmoothingLength::h2-len2)
-                   *(SmoothingLength::h2-3.0*len2);
+        return (SmoothingLength::h2-len2)*(SmoothingLength::h2-3.0*len2);
     }
+}
+
+//********************************************************************************
+double Kernel::poly6::laplW_coeff()
+//********************************************************************************
+{
+    static double coeff = -48.*glm::one_over_pi<double>()*SmoothingLength::dh8;
+
+    return coeff;
 }
 
 //********************************************************************************
@@ -88,13 +110,18 @@ glm::dvec2 Kernel::spiky::gradW(glm::dvec2& xi, glm::dvec2& xj)
 {
     glm::dvec2 rij = xi - xj;
     double q = glm::length(rij)*SmoothingLength::dh;
-    if (q>=1. || q<=0.0) return glm::dvec2(0.0);
-    else 
-    {
-        double tmp = 1.-q;
-        return -30.*glm::one_over_pi<double>()
-                   *SmoothingLength::dh4*tmp*tmp/(q+1.e-6)*rij;
-    }
+    
+    double tmp = 1.-q;
+    return tmp*tmp/(q+1.e-6)*rij;
+}
+
+//********************************************************************************
+double Kernel::spiky::gradW_coeff()
+//********************************************************************************
+{
+    static const double coeff = -30.*glm::one_over_pi<double>()*SmoothingLength::dh4;
+
+    return coeff;
 }
 
 //********************************************************************************
@@ -103,33 +130,39 @@ double Kernel::visc::laplW(glm::dvec2& xi, glm::dvec2& xj)
 {
     glm::dvec2 rij = xi - xj;
     double q = glm::length(rij)*SmoothingLength::dh;
-    if (q>=1. || q<0.0) return 0.0;
-    else 
-    {
-        double tmp = 1.-q;
-        return 40.*glm::one_over_pi<double>()*SmoothingLength::dh4*tmp;
-    }
+
+    return (1.-q);
 }
 
 //********************************************************************************
-double Kernel::surface::C(glm::dvec2& xi, glm::dvec2& xj)
+double Kernel::visc::laplW_coeff()
 //********************************************************************************
 {
-    glm::dvec2 rij = xi - xj;
-    double q = glm::length(rij)*SmoothingLength::dh;
-    if (q>=1. || q<0.0) return 0.0;
-    else 
+    static double coeff = 40.*glm::one_over_pi<double>()*SmoothingLength::dh4;
+
+    return coeff;
+}
+
+//********************************************************************************
+double Kernel::surface::C(const double& r)
+//********************************************************************************
+{
+    double q = r*SmoothingLength::dh;
+    double tmp = 1.-q;
+    double f1 = tmp*tmp*tmp*q*q*q;
+    if (q<=0.5)
     {
-        double tmp = 1.-q;
-        double f1 = tmp*tmp*tmp*q*q*q;
-        double mult = 32.*glm::one_over_pi<double>()*SmoothingLength::dh2;
-        if (q>0.5)
-        {
-            return mult*f1;
-        }
-        else
-        {
-            return mult*(2.*f1-1./64.);
-        }
+        f1*=2.;
+        f1-=1./64.;
     }
+    return f1;
+}
+
+//********************************************************************************
+double Kernel::surface::C_coeff()
+//********************************************************************************
+{
+    static const double coeff = 32.*glm::one_over_pi<double>()*SmoothingLength::dh2;
+
+    return coeff;
 }

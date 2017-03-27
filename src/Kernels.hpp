@@ -43,20 +43,26 @@ namespace Kernel
     namespace poly6
     {
         double         W(glm::dvec2& xi, glm::dvec2& xj);
+        double         W_coeff();
         glm::dvec2 gradW(glm::dvec2& xi, glm::dvec2& xj);
+        double     gradW_coeff();
         double     laplW(glm::dvec2& xi, glm::dvec2& xj);
+        double     laplW_coeff();
     }
     namespace spiky
     {
         glm::dvec2 gradW(glm::dvec2& xi, glm::dvec2& xj);
+        double     gradW_coeff();
     }
     namespace visc
     {
         double laplW(glm::dvec2& xi, glm::dvec2& xj);
+        double laplW_coeff();
     }
     namespace surface
     {
-        double C(glm::dvec2& xi, glm::dvec2& xj);
+        double C(const double& r);
+        double C_coeff();
     }
 }
 

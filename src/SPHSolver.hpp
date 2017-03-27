@@ -41,7 +41,7 @@ protected:
     void calcDensityErr();    //calculate density error
     void initPressure();      //set pressure to 0
     void calcPressure();      //calc pressure - EOS
-    void calcColor();         //calc color
+    void calcNormal();        //calc normal
     void calcPressForces();   //calc pressure forces
     void calcViscForces();    //calc viscous forces
     void calcSurfForces();    //calc viscous forces

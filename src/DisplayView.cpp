@@ -244,7 +244,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
                 sForce_[iPart] = cloud[iPart].Fpress;
             }
 
-            glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+            glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::VISCFORCES)
         {
@@ -254,7 +254,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
                 sForce_[iPart] = cloud[iPart].Fvisc;
             }
 
-            glUniform3f(colorLoc, 0.0f, 1.0f, 1.0f);
+            glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
         {
@@ -262,10 +262,9 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
             for (int iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Fsurf;
-              //sForce_[iPart] = cloud[iPart].normal;
             }
 
-            glUniform3f(colorLoc, 1.0f, 0.0f, 1.0f);
+            glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::OTHERFORCES)
         {
@@ -275,7 +274,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
                 sForce_[iPart] = cloud[iPart].Fother;
             }
 
-            glUniform3f(colorLoc, 1.0f, 0.0f, 1.0f);
+            glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
         }
 
         else if (RenderSettings::displayRender==RenderSettings::ALLFORCES)
@@ -286,7 +285,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
                 sForce_[iPart] = cloud[iPart].Ftot;
             }
 
-            glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
+            glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
         }
 
         glm::vec2 Fmax=calcMaxForce(sForce_);
