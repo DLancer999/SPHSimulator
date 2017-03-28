@@ -38,9 +38,6 @@ int main()
     int wrtngTimerID = Statistics::createTimer("writingTime  ");
     int rendeTimerID = Statistics::createTimer("renderingTime");
 
-    Timer shouldRender;
-    Timer shouldRename;
-
     bool continueLoop = true;
     int  iStep = 0;
     int  stepsPerSec = 0;
@@ -82,28 +79,23 @@ int main()
             Statistics::timers[wrtngTimerID].addTime();
         }
 
-
 	    // Render to screen - 60 fps max
-        shouldRender.end();
-        if (shouldRender.lapTime()>16.66e-3) 
+        if (windowManager.shouldRender()) 
         {
             Statistics::timers[rendeTimerID].start();
             continueLoop &= windowManager.renderParticles(SPHsolver.cloud(), SPHsolver.NParticles());
             Statistics::timers[rendeTimerID].end();
             Statistics::timers[rendeTimerID].addTime();
-            shouldRender.start();
         }
 
 	    // rename window - once per sec
-        shouldRename.end();
-        if (shouldRename.lapTime()>1.0) 
+        if (windowManager.shouldRename()) 
         {
             std::string newName ="Time="+std::to_string(SimulationSettings::simTime)+" "
                                 +"Step="+std::to_string(iStep)+" "
                                 +"Steps/Sec="+std::to_string(stepsPerSec)+" "
                                 +"CFL=" +std::to_string(SPHsolver.calcCFL());
-            glfwSetWindowTitle(windowManager.window(), newName.c_str());
-            shouldRename.start();
+            windowManager.renameWindow(newName);
             stepsPerSec=0;
         }
 	}

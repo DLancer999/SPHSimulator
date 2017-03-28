@@ -25,6 +25,27 @@ SourceFiles
 #include <glm/glm.hpp>
 #include <vector>
 
+class Neigbhor
+{
+public:
+    glm::dvec2 dir;
+    double     dist;
+    int        ID;
+
+public:
+    Neigbhor():
+    dir(0.0),
+    dist(0.0),
+    ID(-1)
+    {}
+
+    Neigbhor(const int neiID):
+    dir(0.0),
+    dist(0.0),
+    ID(neiID)
+    {}
+};
+
 class Particle
 {
 public:
@@ -42,7 +63,7 @@ public:
     double ddensity;    //1./density
     double densityErr;
     double pressure;
-    std::vector<int> nei; //list of neighbours
+    std::vector<Neigbhor> nei; //list of neighbours
 
 public:
     Particle():

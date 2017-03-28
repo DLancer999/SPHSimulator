@@ -41,7 +41,9 @@ void SPHSolver::init()
             {
                 if (i==0&&j==0) continue;
                 offParticle = glm::dvec2(i*SPHSettings::initDx,j*SPHSettings::initDx);
-                glm::dvec2 tmpGradWij = Kernel::poly6::gradW(cntParticle,offParticle)
+                glm::dvec2 rij = cntParticle-offParticle;
+                double dist = glm::length(rij);
+                glm::dvec2 tmpGradWij = Kernel::poly6::gradW(rij,dist)
                                        *Kernel::poly6::gradW_coeff();
                 gradWij += tmpGradWij;
                 dotGradWij += glm::dot(tmpGradWij,tmpGradWij);
@@ -179,6 +181,7 @@ void SPHSolver::PCISPHStep()
     const double targetDensErr = SPHSettings::densityErr*SPHSettings::particleDensity;
     while(densErr>targetDensErr && iter<500)
     {
+        updateNei();
         calcDensity();
         calcDensityErr();
         updatePressure();
@@ -198,9 +201,9 @@ void SPHSolver::PCISPHStep()
         for (int iPart = 0;iPart<activeParticles_;iPart++) 
         {
             Particle& iParticle = cloud_[iPart];
-            iParticle.Ftot = iParticle.Fpress;
+            iParticle.Ftot+= iParticle.Fpress;
 
-            glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Ftot;
+            glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
             iParticle.velocity += update;
             iParticle.position += SimulationSettings::dt*update;
         }
@@ -213,29 +216,40 @@ void SPHSolver::PCISPHStep()
 bool SPHSolver::step() 
 //********************************************************************************
 {
-    static int reorTimerID = Statistics::createTimer("SPHSolver::Step::reorTime");
-    static int neibTimerID = Statistics::createTimer("SPHSolver::Step::neibTime");
-    static int stepTimerID = Statistics::createTimer("SPHSolver::Step::SPHsolver");
+    static int reorTimerID      = Statistics::createTimer("SPHSolver::Step::reorTime     ");
+    static int findNeiTimerID   = Statistics::createTimer("SPHSolver::Step::findNeiTime  ");
+    static int updateNeiTimerID = Statistics::createTimer("SPHSolver::Step::updateNeiTime");
+    static int stepTimerID      = Statistics::createTimer("SPHSolver::Step::SPHsolver    ");
 
     static int iReorder = 0;
     iReorder++;
 
+    std::cout<<"mple00"<<std::endl;
     #pragma omp parallel for
     for (int i=0;i<activeParticles_;i++)
     {
         if(cloud_[i].nei.size())
             cloud_[i].nei.clear();
     }
-    generateParticles();
 
-    if(iReorder%200==0)
+    std::cout<<"mple01"<<std::endl;
+    if(iReorder%100==0)
     {
         COUNT_TIME(neibhs_.reorderCloud(cloud_,activeParticles_), reorTimerID);
     }
 
+    std::cout<<"mple02"<<std::endl;
+    generateParticles();
+
+    std::cout<<"mple03"<<std::endl;
     neibhs_.clear();
 
-    COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), neibTimerID);
+    std::cout<<"mple04"<<std::endl;
+    COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), findNeiTimerID);
+
+    std::cout<<"mple05"<<std::endl;
+    COUNT_TIME(updateNei(), updateNeiTimerID);
+    std::cout<<"mple06"<<std::endl;
 
     Statistics::timers[stepTimerID].start();
     switch (SPHSettings::SPHstep)
@@ -257,6 +271,7 @@ bool SPHSolver::step()
         }
     }
     SimulationSettings::updateSimTime();
+    std::cout<<"mple07"<<std::endl;
 
     Statistics::timers[stepTimerID].end();
     Statistics::timers[stepTimerID].addTime();
@@ -280,13 +295,15 @@ void SPHSolver::generateParticles()
         {
             if (SimulationSettings::simTime-genTime>=dtGenFaucet)
             {
+                glm::dvec2 initVelNormalized = glm::normalize(InitialConditions::particleInitVel);
+                glm::dvec2 generationDirection = glm::dvec2(-initVelNormalized.y,initVelNormalized.x);
                 //std::cout<<"generating"<<std::endl;
                 if (activeParticles_<SPHSettings::NParticles)
                 {
                     for (int i=0;i<SPHSettings::LParticles;i++)
                     {
                         if (activeParticles_>=SPHSettings::NParticles) break;
-                        cloud_[activeParticles_].position = InitialConditions::particleInitPos + glm::dvec2(0,SPHSettings::initDx*i);
+                        cloud_[activeParticles_].position = InitialConditions::particleInitPos + i*SPHSettings::initDx*generationDirection;
                         cloud_[activeParticles_].velocity = InitialConditions::particleInitVel;
                         cloud_[activeParticles_].mass     = SPHSettings::particleMass;
                         activeParticles_++;
@@ -304,7 +321,7 @@ void SPHSolver::generateParticles()
                 if (activeParticles_<SPHSettings::NParticles)
                 {
                     //double     radius = 0.3*double(SPHSettings::LParticles)*SPHSettings::initDx; 
-                    double     radius = 1.3*double(SPHSettings::LParticles)*SPHSettings::initDx; 
+                    double     radius = 0.4*double(SPHSettings::LParticles)*SPHSettings::initDx; 
                     double     offset = 0.5*SPHSettings::initDx*double(SPHSettings::LParticles-1);
                     glm::dvec2 center = InitialConditions::particleInitPos + glm::dvec2(offset,offset);
 
@@ -337,6 +354,29 @@ void SPHSolver::generateParticles()
 }
 
 //********************************************************************************
+void SPHSolver::updateNei()
+//********************************************************************************
+{
+    #pragma omp parallel for
+    for (int iPart=0;iPart<activeParticles_;iPart++)
+    {
+        Particle& iParticle = cloud_[iPart];
+        int Nnei = (int)iParticle.nei.size();
+        for (int i = 0; i<Nnei;i++)
+        {
+            int jPart = cloud_[iPart].nei[i].ID;
+            if (iPart!=jPart)
+            {
+                Particle& jParticle = cloud_[jPart];
+
+                iParticle.nei[i].dir  = iParticle.position-jParticle.position;
+                iParticle.nei[i].dist = glm::length(iParticle.nei[i].dir);
+            }
+        }
+    }
+}
+
+//********************************************************************************
 void SPHSolver::calcDensity()
 //********************************************************************************
 {
@@ -350,10 +390,10 @@ void SPHSolver::calcDensity()
         int Nnei = (int)iParticle.nei.size();
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = iParticle.nei[i];
-            Particle& neiParticle = cloud_[neiPart];
+            int jPart = iParticle.nei[i].ID;
+            Particle& jParticle = cloud_[jPart];
 
-            dens += neiParticle.mass*Kernel::poly6::W(iParticle.position,neiParticle.position);
+            dens += jParticle.mass*Kernel::poly6::W(iParticle.nei[i].dist);
         }
         dens*=Kernel::poly6::W_coeff();
 
@@ -411,11 +451,11 @@ void SPHSolver::calcNormal()
         int Nnei = (int)iParticle.nei.size();
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = iParticle.nei[i];
-            Particle& neiParticle = cloud_[neiPart];
+            int jPart = iParticle.nei[i].ID;
+            Particle& jParticle = cloud_[jPart];
 
-            norm += neiParticle.mass*neiParticle.ddensity
-                  *Kernel::poly6::gradW(iParticle.position,neiParticle.position);
+            norm += jParticle.mass*jParticle.ddensity
+                  *Kernel::poly6::gradW(iParticle.nei[i].dir,iParticle.nei[i].dist);
         }
         norm *= Kernel::poly6::gradW_coeff()*Kernel::SmoothingLength::h;
         iParticle.normal = norm;
@@ -430,7 +470,8 @@ void SPHSolver::updatePressure()
     #pragma omp parallel for
     for (int iPart=0;iPart<activeParticles_;iPart++)
     {
-        cloud_[iPart].pressure = 1.*fmax(delta_*cloud_[iPart].densityErr,0.0);
+        cloud_[iPart].pressure = fmax(delta_*cloud_[iPart].densityErr,0.0);
+      //cloud_[iPart].pressure = delta_*cloud_[iPart].densityErr;
     }
 }
 
@@ -449,7 +490,7 @@ void SPHSolver::calcOtherForces()
         glm::dvec2 iPos = cloud_[iPart].position;
         glm::dvec2 bndPos(0.0,0.0);
         glm::dvec2 tmpiPos(0.0,0.0);
-        double W0 = Kernel::poly6::W(tmpiPos,tmpiPos)*Kernel::poly6::W_coeff();
+        double W0 = Kernel::poly6::W(0.0)*Kernel::poly6::W_coeff();
         double mult = 2.0;
         double scaledh  = mult*Kernel::SmoothingLength::h;
         double dScaledh = 1./scaledh;
@@ -459,13 +500,14 @@ void SPHSolver::calcOtherForces()
             {
                 tmpiPos = glm::dvec2(iPos.x,0.0)*dScaledh;
                 bndPos  = glm::dvec2(BoundaryConditions::bndBox.minX(),0.0)*dScaledh;
+                double dist = glm::length(tmpiPos-bndPos);
                 cloud_[iPart].Fother.x+=BoundaryConditions::bndCoeff
-                                       *Kernel::poly6::W(tmpiPos,bndPos)
+                                       *Kernel::poly6::W(dist)
                                        *Kernel::poly6::W_coeff();
             }
             else
             {
-                //cloud_[iPart].velocity.x=0.;
+                cloud_[iPart].velocity.x=0.;
                 cloud_[iPart].Fother.x+=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -475,13 +517,14 @@ void SPHSolver::calcOtherForces()
             {
                 tmpiPos = glm::dvec2(iPos.x,0.0)*dScaledh;
                 bndPos  = glm::dvec2(BoundaryConditions::bndBox.maxX(),0.0)*dScaledh;
+                double dist = glm::length(tmpiPos-bndPos);
                 cloud_[iPart].Fother.x-=BoundaryConditions::bndCoeff
-                                       *Kernel::poly6::W(tmpiPos,bndPos)
+                                       *Kernel::poly6::W(dist)
                                        *Kernel::poly6::W_coeff();
             }
             else
             {
-                //cloud_[iPart].velocity.x=0.;
+                cloud_[iPart].velocity.x=0.;
                 cloud_[iPart].Fother.x-=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -491,13 +534,14 @@ void SPHSolver::calcOtherForces()
             {
                 tmpiPos = glm::dvec2(0.0,iPos.y)*dScaledh;
                 bndPos  = glm::dvec2(0.0,BoundaryConditions::bndBox.minY())*dScaledh;
+                double dist = glm::length(tmpiPos-bndPos);
                 cloud_[iPart].Fother.y+=BoundaryConditions::bndCoeff
-                                       *Kernel::poly6::W(tmpiPos,bndPos)
+                                       *Kernel::poly6::W(dist)
                                        *Kernel::poly6::W_coeff();
             }
             else
             {
-                //cloud_[iPart].velocity.y=0.;
+                cloud_[iPart].velocity.y=0.;
                 cloud_[iPart].Fother.y+=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -507,13 +551,14 @@ void SPHSolver::calcOtherForces()
             {
                 tmpiPos = glm::dvec2(0.0,iPos.y)*dScaledh;
                 bndPos  = glm::dvec2(0.0,BoundaryConditions::bndBox.maxY())*dScaledh;
+                double dist = glm::length(tmpiPos-bndPos);
                 cloud_[iPart].Fother.y-=BoundaryConditions::bndCoeff
-                                       *Kernel::poly6::W(tmpiPos,bndPos)
+                                       *Kernel::poly6::W(dist)
                                        *Kernel::poly6::W_coeff();
             }
             else
             {
-                //cloud_[iPart].velocity.y=0.;
+                cloud_[iPart].velocity.y=0.;
                 cloud_[iPart].Fother.y-=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -533,21 +578,21 @@ void SPHSolver::calcPressForces()
 
         glm::dvec2 Fp = glm::dvec2(0.0);
 
-        int Nnei = (int)cloud_[iPart].nei.size();
+        int Nnei = (int)iParticle.nei.size();
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = cloud_[iPart].nei[i];
-            if (iPart==neiPart) continue;
-            Particle& neiParticle = cloud_[neiPart];
+            int jPart = iParticle.nei[i].ID;
+            if (iPart==jPart) continue;
+            Particle& jParticle = cloud_[jPart];
 
-            Fp+=neiParticle.mass*neiParticle.ddensity 
-               *(iParticle.pressure + neiParticle.pressure)
-               *Kernel::spiky::gradW(iParticle.position,neiParticle.position);
+            Fp+=jParticle.mass*jParticle.ddensity 
+               *(iParticle.pressure + jParticle.pressure)
+               *Kernel::spiky::gradW(iParticle.nei[i].dir,iParticle.nei[i].dist);
         }
 
         Fp*=-0.5*Kernel::spiky::gradW_coeff();
         
-        cloud_[iPart].Fpress= Fp;
+        iParticle.Fpress= Fp;
     }
 }
 
@@ -562,23 +607,23 @@ void SPHSolver::calcViscForces()
 
         Particle& iParticle = cloud_[iPart];
 
-        int Nnei = (int)cloud_[iPart].nei.size();
+        int Nnei = (int)iParticle.nei.size();
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = cloud_[iPart].nei[i];
-            //std::cout<<" "<<neiPart;
-            if (iPart==neiPart) continue;
-            Particle& neiParticle = cloud_[neiPart];
+            int jPart = iParticle.nei[i].ID;
+            //std::cout<<" "<<jPart;
+            if (iPart==jPart) continue;
+            Particle& jParticle = cloud_[jPart];
 
-            Fv+= neiParticle.mass
-               *neiParticle.ddensity
-               *(neiParticle.velocity-iParticle.velocity)
-               *Kernel::visc::laplW(iParticle.position,neiParticle.position);
+            Fv+= jParticle.mass
+               *jParticle.ddensity
+               *(jParticle.velocity-iParticle.velocity)
+               *Kernel::visc::laplW(iParticle.nei[i].dist);
         }
         Fv*=SPHSettings::viscosity*Kernel::visc::laplW_coeff();
 
-        cloud_[iPart].Fvisc= Fv;
+        iParticle.Fvisc= Fv;
     }
 }
 
@@ -592,40 +637,35 @@ void SPHSolver::calcSurfForces()
         glm::dvec2 Fcohesion  = glm::dvec2(0.0);
         glm::dvec2 Fcurvature = glm::dvec2(0.0);
         double correction = 0.0;
-        glm::dvec2 rij(0.0);
-        double     len(0.0);
 
         Particle& iParticle = cloud_[iPart];
 
-        int Nnei = (int)cloud_[iPart].nei.size();
+        int Nnei = (int)iParticle.nei.size();
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
         for (int i = 0; i<Nnei;i++)
         {
-            int neiPart = cloud_[iPart].nei[i];
-            //std::cout<<" "<<neiPart;
-            if (iPart==neiPart) continue;
-            Particle& neiParticle = cloud_[neiPart];
+            int jPart = iParticle.nei[i].ID;
+            //std::cout<<" "<<jPart;
+            if (iPart==jPart) continue;
+            Particle& jParticle = cloud_[jPart];
 
-            rij = iParticle.position-neiParticle.position;
-            len = glm::length(rij);
-
-            correction = 2.*SPHSettings::particleDensity/(iParticle.density+neiParticle.density);
+            correction = 2.*SPHSettings::particleDensity/(iParticle.density+jParticle.density);
 
             Fcohesion+= correction
-                   *iParticle.mass*neiParticle.mass 
-                   *Kernel::surface::C(len)
-                   *rij/len;
+                   *iParticle.mass*jParticle.mass 
+                   *Kernel::surface::C(iParticle.nei[i].dist)
+                   *iParticle.nei[i].dir/iParticle.nei[i].dist;
 
             Fcurvature+= correction
                    *iParticle.mass
-                   *(iParticle.normal - neiParticle.normal);
+                   *(iParticle.normal - jParticle.normal);
         }
 
         Fcohesion *= Kernel::surface::C_coeff();
 
-        cloud_[iPart].Fsurf = -SPHSettings::surfTension
-                             * iParticle.density
-                             * (Fcohesion+Fcurvature);
+        iParticle.Fsurf = -SPHSettings::surfTension
+                          * iParticle.density
+                          * (Fcohesion+Fcurvature);
     }
 }
 

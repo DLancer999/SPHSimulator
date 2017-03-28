@@ -37,15 +37,14 @@ void Kernel::SmoothingLength::setSmoothingLength(const double smoothingLength)
 }
 
 //********************************************************************************
-double Kernel::poly6::W(glm::dvec2& xi, glm::dvec2& xj)
+double Kernel::poly6::W(double mag_rij)
 //********************************************************************************
 {
-    glm::dvec2 rij = xi - xj;
-    double len2 = glm::length2(rij);
-    if (len2>=SmoothingLength::h2 || len2<0.0) return 0.0;
+    double mag2 = mag_rij*mag_rij;
+    if (mag2>=SmoothingLength::h2 || mag2<0.0) return 0.0;
     else 
     {
-        double tmp = SmoothingLength::h2-len2;
+        double tmp = SmoothingLength::h2-mag2;
         return tmp*tmp*tmp;
     }
 }
@@ -60,15 +59,14 @@ double Kernel::poly6::W_coeff()
 }
 
 //********************************************************************************
-glm::dvec2 Kernel::poly6::gradW(glm::dvec2& xi, glm::dvec2& xj)
+glm::dvec2 Kernel::poly6::gradW(glm::dvec2& rij, double mag_rij)
 //********************************************************************************
 {
-    glm::dvec2 rij = xi - xj;
-    double len2 = glm::length2(rij);
-    if (len2>=SmoothingLength::h2 || len2<0.0) return glm::dvec2(0.0);
+    double mag2 = mag_rij*mag_rij;
+    if (mag2>=SmoothingLength::h2 || mag2<0.0) return glm::dvec2(0.0);
     else 
     {
-        double tmp = SmoothingLength::h2-len2;
+        double tmp = SmoothingLength::h2-mag2;
         return tmp*tmp*rij;
     }
 }
@@ -105,11 +103,10 @@ double Kernel::poly6::laplW_coeff()
 }
 
 //********************************************************************************
-glm::dvec2 Kernel::spiky::gradW(glm::dvec2& xi, glm::dvec2& xj)
+glm::dvec2 Kernel::spiky::gradW(glm::dvec2& rij, double mag_rij)
 //********************************************************************************
 {
-    glm::dvec2 rij = xi - xj;
-    double q = glm::length(rij)*SmoothingLength::dh;
+    double q = mag_rij*SmoothingLength::dh;
     
     double tmp = 1.-q;
     return tmp*tmp/(q+1.e-6)*rij;
@@ -125,11 +122,10 @@ double Kernel::spiky::gradW_coeff()
 }
 
 //********************************************************************************
-double Kernel::visc::laplW(glm::dvec2& xi, glm::dvec2& xj)
+double Kernel::visc::laplW(double mag_rij)
 //********************************************************************************
 {
-    glm::dvec2 rij = xi - xj;
-    double q = glm::length(rij)*SmoothingLength::dh;
+    double q = mag_rij*SmoothingLength::dh;
 
     return (1.-q);
 }

@@ -35,7 +35,7 @@ void DisplayView::keyboard(GLFWwindow* window, int key, int scancode, int action
             if (RenderSettings::displayRender==RenderSettings::INDEX)
             {
                 RenderSettings::displayRender=RenderSettings::SIMPLE;
-                glfwSetWindowTitle(window, "Color-based Visualization");
+                glfwSetWindowTitle(window, "Velocity-based Visualization");
             }
             else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
             {
@@ -224,6 +224,10 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
                 scale*velMag*0.3f+0.7
             );
         }
+        else 
+        {
+            sColor_[iPart] = glm::vec3(0.0f);
+        }
     }
 
     particleShader_.use();
@@ -320,6 +324,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
     }
     
     glfwSwapBuffers(window_);
+    renderTimer_.start();
     return !glfwWindowShouldClose(window_);
 }
 

@@ -18,7 +18,7 @@ SPHSettings::Solver SPHSettings::SPHstep = SPHSettings::Solver::PCISPH;
 
 //field Particles
 int SPHSettings::LParticles = 20;
-int SPHSettings::NParticles = 2000;
+int SPHSettings::NParticles = 3000;
       
 double SPHSettings::initDx = 0.02;
 
@@ -34,22 +34,22 @@ glm::dvec2 SPHSettings::grav = glm::dvec2(0.0,-1.e1);
 
 //----------------SimulationSettings-----------------//
 double SimulationSettings::dt         = 1e-3;
-double SimulationSettings::simTimeEnd = 5.;
+double SimulationSettings::simTimeEnd = 15.;
 double SimulationSettings::simTime    = 0.0;
 int    SimulationSettings::showProgressEvery = 20000;
 
 //----------------InitialConditions-----------------//
 InitialConditions::ParticleGeneration 
-    InitialConditions::particleGeneration = InitialConditions::ALLIN;
+  //InitialConditions::particleGeneration = InitialConditions::ALLIN;
   //InitialConditions::particleGeneration = InitialConditions::FAUCET;
-  //InitialConditions::particleGeneration = InitialConditions::DRIPPING;
-double     InitialConditions::particleGenTime = 1.; //for DRIPPING only
+    InitialConditions::particleGeneration = InitialConditions::DRIPPING;
+double     InitialConditions::particleGenTime = 0.8; //for DRIPPING only
 glm::dvec2 InitialConditions::particleInitVel = glm::dvec2(0.00,0.00);
-glm::dvec2 InitialConditions::particleInitPos = glm::dvec2(0.25,0.05);
+glm::dvec2 InitialConditions::particleInitPos = glm::dvec2(0.30,1.55);
 
 //----------------BoundaryConditions-----------------//
 BoundingBox<glm::dvec2> BoundaryConditions::bndBox(glm::dvec2(0.0,0.0),glm::dvec2(1.0,5.0));
-double                  BoundaryConditions::bndCoeff = 5;
+double                  BoundaryConditions::bndCoeff = 0.5;
 double                  BoundaryConditions::bndConditionRange = 2.0;
 
 
@@ -72,5 +72,5 @@ int RenderSettings::width  = 512;
 int RenderSettings::height = 1024;
 int RenderSettings::printEvr= 16000; //print to file
 RenderSettings::FileRenderType    RenderSettings::fileRender= RenderSettings::DISCRETE;
-RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::INDEX;
-//RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SIMPLE;
+//RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::INDEX;
+RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SIMPLE;

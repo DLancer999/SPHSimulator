@@ -31,6 +31,7 @@ SourceFiles
 
 #include "Particle.hpp"
 #include "Shader.hpp"
+#include "Statistics.hpp"
 
 namespace DisplayView
 {
@@ -51,6 +52,9 @@ protected:
     std::vector<glm::vec3> sColor_;
     std::vector<glm::vec2> sForce_;
 
+    Timer renderTimer_;
+    Timer renameWindowTimer_;
+
 public:
     WindowManager():
 	window_(),
@@ -63,7 +67,9 @@ public:
     cameraView_(),
     sPosition_(),
     sColor_(),
-    sForce_()
+    sForce_(),
+    renderTimer_(),
+    renameWindowTimer_()
     {}
 
     //disable copy constructor
@@ -85,10 +91,23 @@ public:
     
     GLFWwindow* window(){return window_;}
 
+    //used to render forces on particles
     glm::dvec2 calcMaxForce(std::vector<glm::vec2>& force);
     float calcScale(glm::vec2 Fmax);
+
+    //basic render functions
     void init(std::vector<Particle>& cloud);
     bool renderParticles(std::vector<Particle>& cloud, const int NParticles);
+
+    //time-checks
+    bool shouldRender(){renderTimer_.end();       return (renderTimer_.lapTime()>16.66e-3);}
+    bool shouldRename(){renameWindowTimer_.end(); return (renameWindowTimer_.lapTime()>1.0);}
+
+    void renameWindow(std::string newName)
+    {
+        glfwSetWindowTitle(window_, newName.c_str());
+        renameWindowTimer_.start();
+    }
 
     //disable operator = 
     WindowManager& operator=(const WindowManager& op);

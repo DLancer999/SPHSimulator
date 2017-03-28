@@ -37,6 +37,7 @@ protected:
     int    activeParticles_;
 
     void generateParticles(); //activate and initialize new particles when needed
+    void updateNei();         //update neibghor values
     void calcDensity();       //calculate density
     void calcDensityErr();    //calculate density error
     void initPressure();      //set pressure to 0

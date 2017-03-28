@@ -13,7 +13,8 @@ Class
  
 Description
     Class for particle grouping
-    -- Not actual hast table yet... just AABB background grid
+    -- Not actual hash table yet... just AABB background grid
+    -- both AABB and ZSorting implementations are memory hungry... brute force approach
 
 SourceFiles
     -
@@ -30,6 +31,7 @@ SourceFiles
 #include <algorithm>
 
 #include "Kernels.hpp"
+#include "Particle.hpp"
 
 typedef std::vector< std::vector< int > > ZIndex;
 typedef std::vector< glm::ivec2 > ZMap;
@@ -83,10 +85,8 @@ public:
             particlesIn_[i].resize(gridSize_.y);
         }
 
-        std::cout<<"gridSize="<<gridSize_.x<<" "<<gridSize_.y<<std::endl;
         int ZMapSize = std::max(gridSize_.x,gridSize_.y);
         int pow2 = 0;
-        std::cout<<"Bef-ZmapSize="<<ZMapSize<<std::endl;
         while (ZMapSize>0)
         {
             ZMapSize>>=1;
@@ -94,7 +94,6 @@ public:
         }
         ZMapSize=1;
         for (int i=0;i<pow2;i++) ZMapSize<<=1;
-        std::cout<<"Aft-ZmapSize="<<ZMapSize<<std::endl;
         ZMapSize*=ZMapSize;
 
         gridZMap_.resize(ZMapSize);
@@ -111,20 +110,6 @@ public:
                 gridZMap_[Zindex] = glm::ivec2(i,j);
             }
         }
-
-      //for (int i=0;i<gridSize_.x;i++)
-      //{
-      //    for (int j=0;j<gridSize_.y;j++)
-      //    {
-      //        std::cout<<gridZindex_[i][j]<<"\t";
-      //    }
-      //    std::cout<<std::endl;
-      //}
-
-      //for (int i=0;i<ZMapSize;i++)
-      //{
-      //    std::cout<<gridZMap_[i].x<<" "<<gridZMap_[i].y<<std::endl;
-      //}
     }
 
     void writeGridRAW(std::string fileName)
@@ -228,7 +213,7 @@ public:
                         double dist2 = glm::length2(cloud[i].position - cloud[neiPos].position);
                         if (dist2 < Kernel::SmoothingLength::h2)
                         {
-                            cloud[i].nei.push_back(neiPos);
+                            cloud[i].nei.push_back(Neigbhor(neiPos));
                         }
                     }
                 }
@@ -255,10 +240,13 @@ public:
 
         for (int iPart=0;iPart<NParticles;iPart++)
         {
-            newCloud[iPart] = cloud[oldToNewMap[iPart]];
+            newCloud.at(iPart) = cloud.at(oldToNewMap[iPart]);
         }
 
-        cloud = newCloud;
+        for (int iPart=0;iPart<NParticles;iPart++)
+        {
+            cloud.at(iPart) = newCloud.at(iPart);
+        }
     }
 
     //return particleList of given grid cell
