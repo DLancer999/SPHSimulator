@@ -210,7 +210,7 @@ public:
                     for (int iNei=0;iNei<nNei;iNei++)
                     {
                         int neiPos = particlesIn_[gridPos.x][gridPos.y][iNei];
-                        double dist2 = glm::length2(cloud[i].position - cloud[neiPos].position);
+                        double dist2 = glm::length2(cloud.at(i).position - cloud.at(neiPos).position);
                         if (dist2 < Kernel::SmoothingLength::h2)
                         {
                             cloud[i].nei.push_back(Neigbhor(neiPos));

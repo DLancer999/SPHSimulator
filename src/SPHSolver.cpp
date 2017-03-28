@@ -66,6 +66,7 @@ void SPHSolver::init()
         {
             for (int j=0;j<SPHSettings::LParticles;j++)
             {
+                if (activeParticles_>=SPHSettings::NParticles) break;
                 //int iPart = i*XParticles+j;
                 cloud_[iPart].position = glm::dvec2
                 (
@@ -87,7 +88,9 @@ void SPHSolver::init()
         //particles will be generated in generateParticles()
     }
 
+    neibhs_.clear();
     neibhs_.findNei(cloud_, activeParticles_);
+    updateNei();
     calcDensity();
 
     if (RenderSettings::fileRender==RenderSettings::RAWDATA)
@@ -224,7 +227,6 @@ bool SPHSolver::step()
     static int iReorder = 0;
     iReorder++;
 
-    std::cout<<"mple00"<<std::endl;
     #pragma omp parallel for
     for (int i=0;i<activeParticles_;i++)
     {
@@ -232,24 +234,18 @@ bool SPHSolver::step()
             cloud_[i].nei.clear();
     }
 
-    std::cout<<"mple01"<<std::endl;
     if(iReorder%100==0)
     {
         COUNT_TIME(neibhs_.reorderCloud(cloud_,activeParticles_), reorTimerID);
     }
 
-    std::cout<<"mple02"<<std::endl;
     generateParticles();
 
-    std::cout<<"mple03"<<std::endl;
     neibhs_.clear();
 
-    std::cout<<"mple04"<<std::endl;
     COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), findNeiTimerID);
 
-    std::cout<<"mple05"<<std::endl;
     COUNT_TIME(updateNei(), updateNeiTimerID);
-    std::cout<<"mple06"<<std::endl;
 
     Statistics::timers[stepTimerID].start();
     switch (SPHSettings::SPHstep)
@@ -271,7 +267,6 @@ bool SPHSolver::step()
         }
     }
     SimulationSettings::updateSimTime();
-    std::cout<<"mple07"<<std::endl;
 
     Statistics::timers[stepTimerID].end();
     Statistics::timers[stepTimerID].addTime();

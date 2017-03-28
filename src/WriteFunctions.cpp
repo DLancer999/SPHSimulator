@@ -158,12 +158,13 @@ void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& 
     double potentialThres = 1./(0.4*SPHSettings::initDx*SPHSettings::initDx);
     glm::dvec2 vel(0.0);
     bool inFluid = false;
+    double mult = RenderSettings::height/RenderSettings::width;
     //metaball apprach
     if (RenderSettings::fileRender==RenderSettings::METABALL)
     {
         for (int j=0;j<RenderSettings::height;j++)
         {
-            pos.y = 2.*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(2.*BoundaryConditions::bndBox.dx());
+            pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
             for (int i=0;i<RenderSettings::width;i++)
             {
                 int iNode = j*RenderSettings::width+i;
@@ -215,7 +216,7 @@ void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& 
     {
         for (int j=0;j<RenderSettings::height;j++)
         {
-            pos.y = 2.*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(2.*BoundaryConditions::bndBox.dx());
+            pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
             for (int i=0;i<RenderSettings::width;i++)
             {
                 int iNode = j*RenderSettings::width+i;

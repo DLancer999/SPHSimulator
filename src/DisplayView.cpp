@@ -238,7 +238,7 @@ bool DisplayView::WindowManager::renderParticles(std::vector<Particle>& cloud, c
     glBindBuffer(GL_ARRAY_BUFFER, VBO_c_);
     glBufferSubData(GL_ARRAY_BUFFER, 0, NParticles*sizeof(glm::vec3), &sColor_[0]);
 
-    float particleSize = 0.75f*float(BoundaryConditions::bndBox.dx()*SPHSettings::initDx)*float(RenderSettings::width);
+    float particleSize = float((SPHSettings::initDx*double(RenderSettings::width)))/RenderSettings::displayBox.dx();
 
     GLint cameraViewLoc = glGetUniformLocation(particleShader_.program(), "cameraView");
     glUniformMatrix4fv(cameraViewLoc, 1, GL_FALSE, glm::value_ptr(cameraView_));
