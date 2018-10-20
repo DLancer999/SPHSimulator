@@ -33,7 +33,7 @@ glm::dvec2 SPHSettings::grav = glm::dvec2(0.0,-9.81e0);
 
 //----------------SimulationSettings-----------------//
 double SimulationSettings::dt         = 1e-3;
-double SimulationSettings::simTimeEnd = 30.;
+double SimulationSettings::simTimeEnd = 10.;
 double SimulationSettings::simTime    = 0.0;
 int    SimulationSettings::showProgressEvery = 20000;
 

@@ -107,125 +107,142 @@ void SPHSolver::init()
 void SPHSolver::WCSPHStep() 
 //********************************************************************************
 {
-    static int densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::WCSPH::densCalcTimer  ");
-    static int pressCalcTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::pressCalcTimer ");
-    static int colorCalcTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::colorCalcTimer ");
-    static int pressForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::pressForceTimer");
-    static int viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::viscForceTimer ");
-    static int surfForceTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::surfForceTimer ");
-    static int otherForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::otherForceTimer");
-    static int updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::updatePosTimer ");
+    static auto densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::WCSPH::densCalcTimer  ");
+    static auto pressCalcTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::pressCalcTimer ");
+    static auto colorCalcTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::colorCalcTimer ");
+    static auto pressForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::pressForceTimer");
+    static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::viscForceTimer ");
+    static auto surfForceTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::surfForceTimer ");
+    static auto otherForceTimerID = Statistics::createTimer("SPHSolver::Step::WCSPH::otherForceTimer");
+    static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::WCSPH::updatePosTimer ");
 
-    COUNT_TIME(calcDensity(), densCalcTimerID);
-    COUNT_TIME(calcPressure(),pressCalcTimerID);
-    COUNT_TIME(calcNormal(),   colorCalcTimerID);
+    auto densCalculator       = Statistics::CountTime(densCalcTimerID,   [this](){ this->calcDensity();  });
+    auto pressCalculator      = Statistics::CountTime(pressCalcTimerID,  [this](){ this->calcPressure(); });
+    auto colorCalculator      = Statistics::CountTime(colorCalcTimerID,  [this](){ this->calcNormal();   });
+    auto pressForceCalculator = Statistics::CountTime(pressForceTimerID, [this](){ this->calcPressForces(); });
+    auto viscForceCalculator  = Statistics::CountTime(viscForceTimerID,  [this](){ this->calcViscForces();  });
+    auto surfForceCalculator  = Statistics::CountTime(surfForceTimerID,  [this](){ this->calcSurfForces();  });
+    auto otherForceCalculator = Statistics::CountTime(otherForceTimerID, [this](){ this->calcOtherForces(); });
+
+    densCalculator();
+    pressCalculator();
+    colorCalculator();
 
     //calc forces
-    COUNT_TIME(calcPressForces(), pressForceTimerID);
-    COUNT_TIME(calcViscForces(),  viscForceTimerID);
-    COUNT_TIME(calcSurfForces(),  surfForceTimerID);
-    COUNT_TIME(calcOtherForces(), otherForceTimerID);
+    pressForceCalculator();
+    viscForceCalculator();
+    surfForceCalculator();
+    otherForceCalculator();
 
     //combine forces and update values
-    Statistics::timers[updatePosTimerID].start();
-    #pragma omp parallel for
-    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
-        cloud_[iPart].Ftot = cloud_[iPart].Fpress
-                           + cloud_[iPart].Fvisc
-                           + cloud_[iPart].Fsurf
-                           + cloud_[iPart].Fother;
+        Statistics::TimerGuard g(updatePosTimerID);
+        #pragma omp parallel for
+        for (int iPart = 0;iPart<activeParticles_;iPart++) 
+        {
+            cloud_[iPart].Ftot = cloud_[iPart].Fpress
+                               + cloud_[iPart].Fvisc
+                               + cloud_[iPart].Fsurf
+                               + cloud_[iPart].Fother;
 
-        cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
-        cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
+            cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
+            cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
+        }
     }
-    Statistics::timers[updatePosTimerID].end();
-    Statistics::timers[updatePosTimerID].addTime();
 }
 
 //********************************************************************************
 void SPHSolver::PCISPHStep() 
 //********************************************************************************
 {
-    static int densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::PCISPH::densCalcTimer  ");
-    static int colorCalcTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::colorCalcTimer ");
-    static int viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::viscForceTimer ");
-    static int surfForceTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::surfForceTimer ");
-    static int otherForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::otherForceTimer");
-    static int pressForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::pressForceTimer");
-    static int updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::updatePosTimer ");
+    static auto densCalcTimerID   = Statistics::createTimer("SPHSolver::Step::PCISPH::densCalcTimer  ");
+    static auto colorCalcTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::colorCalcTimer ");
+    static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::viscForceTimer ");
+    static auto surfForceTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::surfForceTimer ");
+    static auto otherForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::otherForceTimer");
+    static auto pressForceTimerID = Statistics::createTimer("SPHSolver::Step::PCISPH::pressForceTimer");
+    static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::Step::PCISPH::updatePosTimer ");
 
-    COUNT_TIME(calcDensity(), densCalcTimerID);
-    COUNT_TIME(calcNormal(),   colorCalcTimerID);
+    auto densCalculator       = Statistics::CountTime(densCalcTimerID,   [this](){ this->calcDensity(); });
+    auto colorCalculator      = Statistics::CountTime(colorCalcTimerID,  [this](){ this->calcNormal();  });
+    auto viscForceCalculator  = Statistics::CountTime(viscForceTimerID,  [this](){ this->calcViscForces();  });
+    auto surfForceCalculator  = Statistics::CountTime(surfForceTimerID,  [this](){ this->calcSurfForces();  });
+    auto otherForceCalculator = Statistics::CountTime(otherForceTimerID, [this](){ this->calcOtherForces(); });
+
+    densCalculator();
+    colorCalculator();
     
     //calc forces
-    COUNT_TIME(calcViscForces(),  viscForceTimerID);
-    COUNT_TIME(calcSurfForces(),  surfForceTimerID);
-    COUNT_TIME(calcOtherForces(), otherForceTimerID);
+    viscForceCalculator();
+    surfForceCalculator();
+    otherForceCalculator();
 
-    Statistics::timers[updatePosTimerID].start();
-    #pragma omp parallel for
-    for (int iPart = 0;iPart<activeParticles_;iPart++) 
     {
-        cloud_[iPart].Ftot = cloud_[iPart].Fvisc+cloud_[iPart].Fsurf+cloud_[iPart].Fother;
+        Statistics::TimerGuard g(updatePosTimerID);
+        #pragma omp parallel for
+        for (int iPart = 0;iPart<activeParticles_;iPart++) 
+        {
+            cloud_[iPart].Ftot = cloud_[iPart].Fvisc+cloud_[iPart].Fsurf+cloud_[iPart].Fother;
 
-        cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
-        cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
+            cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
+            cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
+        }
     }
-    Statistics::timers[updatePosTimerID].end();
-    Statistics::timers[updatePosTimerID].addTime();
 
     double densErr=SPHSettings::particleDensity;
     int iter=0;
 
-    //calculate pressure and pressure force
-    Statistics::timers[pressForceTimerID].start();
-    initPressure();
-    const double targetDensErr = SPHSettings::densityErr*SPHSettings::particleDensity;
-    while(densErr>targetDensErr && iter<500)
     {
-        updateNei();
-        calcDensity();
-        calcDensityErr();
-        updatePressure();
-
-        densErr = 0.;
-        for (int iPart = 0;iPart<activeParticles_;iPart++) 
+        //calculate pressure and pressure force
+        Statistics::TimerGuard g(pressForceTimerID);
+        initPressure();
+        const double targetDensErr = SPHSettings::densityErr*SPHSettings::particleDensity;
+        while(densErr>targetDensErr && iter<500)
         {
-            if (densErr<cloud_[iPart].densityErr)
-                densErr = cloud_[iPart].densityErr;
-        }
+            updateNei();
+            calcDensity();
+            calcDensityErr();
+            updatePressure();
 
-        if (iter==0)
-        iter++;
+            densErr = 0.;
+            for (int iPart = 0;iPart<activeParticles_;iPart++) 
+            {
+                if (densErr<cloud_[iPart].densityErr)
+                    densErr = cloud_[iPart].densityErr;
+            }
 
-        calcPressForces();
-        //#pragma omp parallel for
-        for (int iPart = 0;iPart<activeParticles_;iPart++) 
-        {
-            Particle& iParticle = cloud_[iPart];
-            iParticle.Ftot+= iParticle.Fpress;
+            if (iter==0)
+            iter++;
 
-            glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
-            iParticle.velocity += update;
-            iParticle.position += SimulationSettings::dt*update;
+            calcPressForces();
+            //#pragma omp parallel for
+            for (int iPart = 0;iPart<activeParticles_;iPart++) 
+            {
+                Particle& iParticle = cloud_[iPart];
+                iParticle.Ftot+= iParticle.Fpress;
+
+                glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
+                iParticle.velocity += update;
+                iParticle.position += SimulationSettings::dt*update;
+            }
         }
     }
-    Statistics::timers[pressForceTimerID].end();
-    Statistics::timers[pressForceTimerID].addTime();
 }
 
 //********************************************************************************
 bool SPHSolver::step() 
 //********************************************************************************
 {
-    static int reorTimerID      = Statistics::createTimer("SPHSolver::Step::reorTime     ");
-    static int findNeiTimerID   = Statistics::createTimer("SPHSolver::Step::findNeiTime  ");
-    static int updateNeiTimerID = Statistics::createTimer("SPHSolver::Step::updateNeiTime");
-    static int stepTimerID      = Statistics::createTimer("SPHSolver::Step::SPHsolver    ");
+    static auto reorTimerID      = Statistics::createTimer("SPHSolver::Step::reorTime     ");
+    static auto findNeiTimerID   = Statistics::createTimer("SPHSolver::Step::findNeiTime  ");
+    static auto updateNeiTimerID = Statistics::createTimer("SPHSolver::Step::updateNeiTime");
+    static auto stepTimerID      = Statistics::createTimer("SPHSolver::Step::SPHsolver    ");
 
     static int iReorder = 0;
     iReorder++;
+
+    auto findNeighbours   = Statistics::CountTime(findNeiTimerID,   &HashTable::findNei);
+    auto updateNeighbours = Statistics::CountTime(updateNeiTimerID, [this](){ this->updateNei();});
 
     #pragma omp parallel for
     for (int i=0;i<activeParticles_;i++)
@@ -236,40 +253,41 @@ bool SPHSolver::step()
 
     if(iReorder%100==0)
     {
-        COUNT_TIME(neibhs_.reorderCloud(cloud_,activeParticles_), reorTimerID);
+        Statistics::CountTime(reorTimerID, &HashTable::reorderCloud)(
+          neibhs_, cloud_, activeParticles_
+        );
     }
 
     generateParticles();
 
     neibhs_.clear();
 
-    COUNT_TIME(neibhs_.findNei(cloud_, activeParticles_), findNeiTimerID);
+    findNeighbours(neibhs_, cloud_, activeParticles_);
 
-    COUNT_TIME(updateNei(), updateNeiTimerID);
+    updateNeighbours();
 
-    Statistics::timers[stepTimerID].start();
-    switch (SPHSettings::SPHstep)
     {
-        case (SPHSettings::Solver::WCSPH):
+        Statistics::TimerGuard g(stepTimerID);
+        switch (SPHSettings::SPHstep)
         {
-            WCSPHStep();
-            break;
+            case (SPHSettings::Solver::WCSPH):
+            {
+                WCSPHStep();
+                break;
+            }
+            case (SPHSettings::Solver::PCISPH):
+            {
+                PCISPHStep();
+                break;
+            }
+            default:
+            {
+                std::cerr<<"Invalid SPHSettings::Solver"<<std::endl;
+                exit(1);
+            }
         }
-        case (SPHSettings::Solver::PCISPH):
-        {
-            PCISPHStep();
-            break;
-        }
-        default:
-        {
-            std::cerr<<"Invalid SPHSettings::Solver"<<std::endl;
-            exit(1);
-        }
+        SimulationSettings::updateSimTime();
     }
-    SimulationSettings::updateSimTime();
-
-    Statistics::timers[stepTimerID].end();
-    Statistics::timers[stepTimerID].addTime();
 
     return (!SimulationSettings::breakLoop());
 }

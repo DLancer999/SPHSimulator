@@ -23,57 +23,55 @@ SourceFiles
 #define STATISTICSS_H
 
 #include <chrono>
+#include <functional>
 #include <iostream>
+#include <type_traits>
 #include <vector>
-
-#define COUNT_TIME(FUNCTION,timerID)\
-Statistics::timers[timerID].start();\
-FUNCTION;\
-Statistics::timers[timerID].end();\
-Statistics::timers[timerID].addTime();
-
-typedef std::chrono::time_point<std::chrono::system_clock> Clock;
-typedef std::chrono::duration<double> Duration;
 
 class Timer
 {
+public:
+    using Clock      = std::chrono::high_resolution_clock;
+    using TimePoint  = std::chrono::time_point<Clock>;
+    using Duration   = std::chrono::duration<double>;
+
 private:
-    Clock start_;
-    Clock end_;
+    TimePoint start_;
+    TimePoint end_;
     Duration duration_;
     std::string timerName_;
 public:
-    Timer():
-    start_(std::chrono::system_clock::now()),
-    end_(std::chrono::system_clock::now()),
-    duration_(end_-start_),
-    timerName_("")
+    Timer()
+    : start_(Clock::now())
+    , end_(start_)
+    , duration_(end_-start_)
+    , timerName_("")
     {}
 
-    Timer(const std::string& name):
-    start_(std::chrono::system_clock::now()),
-    end_(std::chrono::system_clock::now()),
-    duration_(end_-start_),
-    timerName_(name)
+    Timer(const std::string& name)
+    : start_(Clock::now())
+    , end_(start_)
+    , duration_(end_-start_)
+    , timerName_(name)
     {}
 
     void start()
     {
-        start_ = std::chrono::system_clock::now();
+        start_ = Clock::now();
     }
     void end()
     {
-        end_ = std::chrono::system_clock::now();
+        end_ = Clock::now();
     }
     void addTime()
     {
         duration_+=end_-start_;
     }
-    double lapTime()
+    double lapTime() const
     {
         return Duration(end_-start_).count();
     }
-    void printDuration()
+    void printDuration() const
     {
         std::cout<<timerName_<<":: "<<duration_.count()<<" sec"<<std::endl;
     }
@@ -82,11 +80,49 @@ public:
 class Statistics
 {
 public:
-    static std::vector<Timer> timers;
-          
-    static int createTimer(const std::string& name)
+    struct TimerID
     {
-        int timerID = (int)timers.size();;
+        size_t index;
+    };
+
+    class TimerGuard
+    {
+    public:
+        TimerGuard(TimerID timerID)
+        : _timerID(timerID)
+        {
+          timers[_timerID.index].start();
+        }
+
+        ~TimerGuard() {
+          timers[_timerID.index].end();
+          timers[_timerID.index].addTime();
+        }
+    private:
+        TimerID _timerID;
+    };
+
+    template <typename Functor>
+    class CountTime {
+    public:
+      TimerID _id;
+      Functor _f;
+
+      CountTime(TimerID id, Functor f):_id(id),_f(f){}
+
+      template <typename ... Args>
+      std::invoke_result_t<Functor, Args...>
+      operator()(Args&&... args)
+      {
+          TimerGuard g(_id);
+          return std::invoke(_f, std::forward<Args>(args)...);
+      }
+    };
+
+          
+    static TimerID createTimer(const std::string& name)
+    {
+        TimerID timerID{timers.size()};
         timers.push_back(Timer(name));
         return timerID;
     }
@@ -94,13 +130,13 @@ public:
     static void printStatistics()
     {
         std::cout<<std::endl <<"----------------Timers Start------------------" <<std::endl;
-        int nTimers = (int)timers.size();;
-        for (int i=0;i<nTimers;i++)
-        {
-            timers[i].printDuration();
-        }
+        for (const Timer& t : timers)
+            t.printDuration();
         std::cout<<"----------------Timers End------------------" <<std::endl<<std::endl;
     }
+
+private:
+    static std::vector<Timer> timers;
 };
 
 #endif

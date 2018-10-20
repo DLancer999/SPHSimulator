@@ -40,7 +40,7 @@ DEBUGFLAGS= -g -O0
 
 ERRORFLAGS= -pedantic-errors
 
-OTHERFLAGS= -std=c++0x -fopenmp
+OTHERFLAGS= -std=c++17 -fopenmp
 
 WARNFLAGS= -Wall -Weffc++ -pedantic \
 	-Wextra -Wcast-align -Wcast-qual \
@@ -62,6 +62,7 @@ WARNFLAGS= -Wall -Weffc++ -pedantic \
 	-Wvolatile-register-var  -Wwrite-strings 
 
 CXXFLAGS= $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS) $(ERRORFLAGS)
+CXX=g++-7
 
 ###########################################
 ### NOT TO BE CHANGED BEYOND THIS LINE  ### 
