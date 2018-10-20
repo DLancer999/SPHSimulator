@@ -1,0 +1,4 @@
+#!/bin/bash
+ctags .
+vim -c 'UpdateTypesFile' -c 'qa' > /dev/null 2> /dev/null
+

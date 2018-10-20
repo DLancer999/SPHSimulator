@@ -1,0 +1,2 @@
+file( COPY ${SOURCE_DIR}/src/shaders DESTINATION ${DESTINATION_DIR} )
+

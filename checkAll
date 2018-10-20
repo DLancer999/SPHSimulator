@@ -1,0 +1,8 @@
+#!/bin/bash
+./CMakeConfigClang
+./buildProject
+#ninja -C build test
+./CMakeConfigGcc
+./buildProject
+#ninja -C build test
+

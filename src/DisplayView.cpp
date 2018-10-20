@@ -128,13 +128,13 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     }    
 
     //create shader programs
-    particleShader_.compileShaderPart("src/shaders/pointShader.vs",GL_VERTEX_SHADER);
-    particleShader_.compileShaderPart("src/shaders/pointShader.fs",GL_FRAGMENT_SHADER);
+    particleShader_.compileShaderPart("shaders/pointShader.vs",GL_VERTEX_SHADER);
+    particleShader_.compileShaderPart("shaders/pointShader.fs",GL_FRAGMENT_SHADER);
     particleShader_.linkProgram();
 
-    forceShader_.compileShaderPart("src/shaders/forceShader.vs",GL_VERTEX_SHADER);
-    forceShader_.compileShaderPart("src/shaders/forceShader.gs",GL_GEOMETRY_SHADER);
-    forceShader_.compileShaderPart("src/shaders/forceShader.fs",GL_FRAGMENT_SHADER);
+    forceShader_.compileShaderPart("shaders/forceShader.vs",GL_VERTEX_SHADER);
+    forceShader_.compileShaderPart("shaders/forceShader.gs",GL_GEOMETRY_SHADER);
+    forceShader_.compileShaderPart("shaders/forceShader.fs",GL_FRAGMENT_SHADER);
     forceShader_.linkProgram();
 
     // Create Vertex Buffer and Array Objects
