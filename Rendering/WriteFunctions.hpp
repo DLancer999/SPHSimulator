@@ -24,8 +24,8 @@ SourceFiles
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "Particle.hpp"
-#include "HashTable.hpp"
+#include "Simulation/Particle.hpp"
+#include "Simulation/HashTable.hpp"
 
 void writeRAWfile(std::string fileName, std::vector<Particle>& cloud);
 void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& neibhs);

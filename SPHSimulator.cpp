@@ -15,16 +15,16 @@ Description
 \************************************************************************/
 #include <iostream>            
 
-#include "Kernels.hpp"        
-#include "SPHSolver.hpp"      
-#include "WriteFunctions.hpp" 
-#include "Statistics.hpp"     
-#include "Settings.hpp"       
+#include "Simulation/Kernels.hpp"        
+#include "Simulation/SPHSolver.hpp"      
+#include "Simulation/Settings.hpp"       
+#include "Rendering/WriteFunctions.hpp" 
+#include "Statistics/Statistics.hpp"     
 
 #define EnableGLRender 1
 
 #if EnableGLRender
-#include "DisplayView.hpp"    
+#include "Rendering/DisplayView.hpp"    
 #endif
 
 void reportProgress(int iStep, SPHSolver& s)
@@ -93,6 +93,14 @@ int main()
     SPHSolver SPHsolver;
     SPHsolver.init();
 
+    if (RenderSettings::fileRender==RenderSettings::RAWDATA)
+    {
+        writeRAWfile("step", SPHsolver.cloud());
+    }
+    else
+    {
+        renderImage("render", SPHsolver.cloud(), SPHsolver.neibhs());
+    }
 
     auto totalTimerID = Statistics::createTimer("totalTime    ");
     auto compuTimerID = Statistics::createTimer("SPHSolver    ");

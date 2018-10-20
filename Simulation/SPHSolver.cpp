@@ -15,9 +15,8 @@ License
 #include <glm/gtx/norm.hpp>
 
 #include "SPHSolver.hpp"
-#include "WriteFunctions.hpp"
 #include "Settings.hpp"
-#include "Statistics.hpp"
+#include "Statistics/Statistics.hpp"
 
 //********************************************************************************
 void SPHSolver::init()
@@ -92,15 +91,6 @@ void SPHSolver::init()
     neibhs_.findNei(cloud_, activeParticles_);
     updateNei();
     calcDensity();
-
-    if (RenderSettings::fileRender==RenderSettings::RAWDATA)
-    {
-        writeRAWfile("step", cloud_);
-    }
-    else
-    {
-        renderImage("render", cloud_, neibhs_);
-    }
 }
 
 //********************************************************************************

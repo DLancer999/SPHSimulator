@@ -16,8 +16,8 @@ License
 
 #include "WriteFunctions.hpp"
 
-#include "Particle.hpp"
-#include "Settings.hpp"
+#include "Simulation/Particle.hpp"
+#include "Simulation/Settings.hpp"
 
 //********************************************************************************
 void writeRAWfile(std::string fileName, std::vector<Particle>& cloud)

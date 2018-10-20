@@ -29,9 +29,9 @@ SourceFiles
 
 #include <glm/glm.hpp>
 
-#include "Particle.hpp"
+#include "Simulation/Particle.hpp"
 #include "Shader.hpp"
-#include "Statistics.hpp"
+#include "Statistics/Statistics.hpp"
 
 namespace DisplayView
 {

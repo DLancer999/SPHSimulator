@@ -43,57 +43,15 @@ set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} ${BOOSTHEADERS} ${OPTFLAGS} ${OTH
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OPTFLAGS} ${LINKFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS} ${BOOSTLIBSDIR}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-include_directories(./src)
-#add_subdirectory (Core)
-
-find_package(PNG REQUIRED)
-include_directories(${PNG_INCLUDE_DIR})
-link_libraries(${PNG_LIBRARY})
-
-set(SimulatorObjects
-  "src/Settings.cpp"
-  "src/SPHSolver.cpp"
-  "src/Kernels.cpp"
-  "src/WriteFunctions.cpp"
-)
-add_library (Simulator ${SimulatorObjects})
-
-set(TimerUtilObjects
-  "src/Statistics.cpp"
-)
-add_library (TimerUtil ${TimerUtilObjects})
-
-set(GlRendererObjects
-  "src/DisplayView.cpp"
-  "src/Shader.cpp"
-)
-
-find_package(OpenGL REQUIRED)
-link_libraries(${OPENGL_LIBRARIES})
-find_package(GLEW REQUIRED)
-include_directories(${GLEW_INCLUDE_DIRS})
-link_libraries(${GLEW_LIBRARIES})
-find_package(glfw3 REQUIRED)
-link_libraries(glfw)
-
-add_library (GlRenderer ${GlRendererObjects})
-
-ADD_CUSTOM_TARGET(
-  copy_shader_files
-  ${CMAKE_COMMAND}
-  -D SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-  -D DESTINATION_DIR=${CMAKE_CURRENT_BINARY_DIR} 
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/copyshaders.cmake
-  COMMENT "Copying Files for target: GlRenderer" VERBATIM 
-)
-
-ADD_DEPENDENCIES ( GlRenderer copy_shader_files )
+include_directories(.)
+add_subdirectory(./Simulation)
+add_subdirectory(./Rendering)
+add_subdirectory(./Statistics)
 
 set(SimulatorComponents "Simulator" "GlRenderer" "TimerUtil")
 
-add_executable(SPHSimulator "src/SPHSimulator.cpp")
+add_executable(SPHSimulator "SPHSimulator.cpp")
 target_link_libraries (SPHSimulator "${SimulatorComponents}")
-#file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
 #no tests yet
 #enable_testing()

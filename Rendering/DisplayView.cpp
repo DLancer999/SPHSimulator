@@ -15,7 +15,7 @@ License
 #include <glm/gtc/type_ptr.hpp>
 
 #include "DisplayView.hpp"
-#include "Settings.hpp"
+#include "Simulation/Settings.hpp"
 
 //********************************************************************************
 void DisplayView::keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mode*/)
@@ -128,13 +128,13 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     }    
 
     //create shader programs
-    particleShader_.compileShaderPart("shaders/pointShader.vs",GL_VERTEX_SHADER);
-    particleShader_.compileShaderPart("shaders/pointShader.fs",GL_FRAGMENT_SHADER);
+    particleShader_.compileShaderPart("Rendering/shaders/pointShader.vs",GL_VERTEX_SHADER);
+    particleShader_.compileShaderPart("Rendering/shaders/pointShader.fs",GL_FRAGMENT_SHADER);
     particleShader_.linkProgram();
 
-    forceShader_.compileShaderPart("shaders/forceShader.vs",GL_VERTEX_SHADER);
-    forceShader_.compileShaderPart("shaders/forceShader.gs",GL_GEOMETRY_SHADER);
-    forceShader_.compileShaderPart("shaders/forceShader.fs",GL_FRAGMENT_SHADER);
+    forceShader_.compileShaderPart("Rendering/shaders/forceShader.vs",GL_VERTEX_SHADER);
+    forceShader_.compileShaderPart("Rendering/shaders/forceShader.gs",GL_GEOMETRY_SHADER);
+    forceShader_.compileShaderPart("Rendering/shaders/forceShader.fs",GL_FRAGMENT_SHADER);
     forceShader_.linkProgram();
 
     // Create Vertex Buffer and Array Objects
