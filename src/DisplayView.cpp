@@ -18,7 +18,7 @@ License
 #include "Settings.hpp"
 
 //********************************************************************************
-void DisplayView::keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int mode)
+void DisplayView::keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mode*/)
 //********************************************************************************
 {
     switch(key)
