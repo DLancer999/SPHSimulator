@@ -53,8 +53,8 @@ void reportProgress(int iStep, SPHSolver& s)
 }
 
 #if EnableGLRender
-bool updateRender(DisplayView::WindowManager& w, SPHSolver& s, int iStep) {
-
+bool updateRender(DisplayView::WindowManager& w, SPHSolver& s, int iStep)
+{
     static auto rendeTimerID = Statistics::createTimer("renderingTime");
     static int  stepsPerSec = 0;
     ++stepsPerSec;
@@ -85,8 +85,23 @@ bool updateRender(DisplayView::WindowManager& w, SPHSolver& s, int iStep) {
 #endif
 
 
+
 int main()
 {
+    try
+    {
+        SPHSettings::readSettings();
+        SimulationSettings::readSettings();
+        InitialConditions::readSettings();
+        BoundaryConditions::readSettings();
+        RenderSettings::readSettings();
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
     //init kernel - smoothing lengths
     Kernel::SmoothingLength::setSmoothingLength(SPHSettings::initDx*2.);
 
@@ -134,5 +149,7 @@ int main()
     }
 
     Statistics::printStatistics();
+
+    return 0;
 }
 

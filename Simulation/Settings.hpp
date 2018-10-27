@@ -49,6 +49,8 @@ public:
     static double viscosity;
     static double surfTension;
     static glm::dvec2 grav;
+
+    static void readSettings();
 };
 
 class SimulationSettings
@@ -69,6 +71,8 @@ public:
         if (simTime>simTimeEnd) return true;
         else                    return false;
     }
+
+    static void readSettings();
 };
 
 class InitialConditions
@@ -84,6 +88,8 @@ public:
     static glm::dvec2 particleInitPos;            //initial particle position
     static glm::dvec2 particleInitVel;            //initial particle velocity
     static double     particleGenTime;            //particles generated every ... seconds, used only for DRIPPING scheme
+
+    static void readSettings();
 };
 
 class BoundaryConditions
@@ -93,6 +99,8 @@ public:
     static BoundingBox<glm::dvec2> bndBox; //boundary wall box
     static double bndCoeff;                //multiplier to boundary force
     static double bndConditionRange;       //range of boundary forces (times h)
+
+    static void readSettings();
 };
 
 //rendering settings
@@ -121,6 +129,8 @@ public:
     static int printEvr;                      //write file every ... timesteps
     static FileRenderType fileRender;
     static DisplayRenderType displayRender;
+
+    static void readSettings();
 };
 
 #endif

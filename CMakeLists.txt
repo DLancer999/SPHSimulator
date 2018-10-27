@@ -35,8 +35,8 @@ set (WARNING_FLAGS
 	-Wvolatile-register-var  -Wwrite-strings"
 )
 
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
+find_package(Boost COMPONENTS program_options REQUIRED)
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} ${OPTFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OPTFLAGS} ${LINKFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS}")
@@ -50,8 +50,7 @@ add_subdirectory(./Statistics)
 set(SimulatorComponents "Simulator" "GlRenderer" "TimerUtil")
 
 add_executable(SPHSimulator "SPHSimulator.cpp")
-target_link_libraries (SPHSimulator ${SimulatorComponents} ${Boost_LIBRARIES})
-
+target_link_libraries (SPHSimulator ${SimulatorComponents} ${Boost_PROGRAM_OPTIONS_LIBRARIES})
 #no tests yet
 #enable_testing()
 #add_subdirectory (TestDir)

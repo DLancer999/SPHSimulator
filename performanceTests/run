@@ -1,0 +1,4 @@
+rm -rf Rendering
+mkdir Rendering
+cp -r ../build/Rendering/shaders Rendering/.
+../build/SPHSimulator 

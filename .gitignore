@@ -5,3 +5,5 @@ deps
 obj
 tags
 types_c.taghl
+
+\.ycm_extra_conf\.py
