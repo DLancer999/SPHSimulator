@@ -24,9 +24,9 @@ SourceFiles
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
-#include <omp.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+#include <iostream>
 #include <fstream>
 #include <algorithm>
 

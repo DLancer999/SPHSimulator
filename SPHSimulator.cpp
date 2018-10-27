@@ -131,7 +131,6 @@ int main()
     bool continueLoop = true;
     int  iStep = 0;
 
-    std::cout<<"Starting Simulation"<<std::endl;
     {
         Statistics::TimerGuard g(totalTimerID);
         while (continueLoop)

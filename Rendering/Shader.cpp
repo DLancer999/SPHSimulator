@@ -11,6 +11,8 @@ License
 \************************************************************************/
 
 #include "Shader.hpp"
+
+#define ShaderLogging 0
  
 //********************************************************************************
 std::string Shader::stringShaderType(const GLenum& shdrType)
@@ -39,7 +41,9 @@ void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
 //********************************************************************************
 {
     //stringShaderType also checks for shdrType... throws error for invalid values
+#if ShaderLogging
     std::cout<<"Compiling "<<stringShaderType(shdrType)<<" from file \""<<sourcePath<<"\"";
+#endif
 
     pShaderComponent shaderPart(new ShaderComponent(shdrType));
 
@@ -62,7 +66,9 @@ void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
     }
     catch(std::ifstream::failure e)
     {
+#if ShaderLogging
         std::cout<<" - Failed"<<std::endl;
+#endif
         std::cerr << "Shader::"<<stringShaderType(shdrType)<<"::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         exit(1);
     }
@@ -82,12 +88,16 @@ void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
     if(!success)
     {
         glGetShaderInfoLog(shaderPart->componentID, 512, NULL, infoLog);
+#if ShaderLogging
         std::cout<<" - Failed"<<std::endl;
+#endif
         std::cerr << "Shader::"<<stringShaderType(shdrType)<<"::COMPILATION_FAILED\n" 
                   << infoLog << std::endl;
         exit(1);
     };
+#if ShaderLogging
     std::cout<<" - Successful"<<std::endl;
+#endif
 
     // add shader part to list for linking
     parts_.push_back(shaderPart);
@@ -107,13 +117,19 @@ void Shader::linkProgram()
     GLuint nParts = (GLuint)parts_.size();
     for (GLuint iPart=0; iPart<nParts; iPart++)
     {
+#if ShaderLogging
         std::cout<<"linking "<<stringShaderType(parts_[iPart]->componentType);
+#endif
         glAttachShader(program_, parts_[iPart]->componentID);
+#if ShaderLogging
         std::cout<<" - Successful"<<std::endl;
+#endif
     }
 
     // Link to shader program
+#if ShaderLogging
     std::cout<<"linking program";
+#endif
     glLinkProgram(program_);
 
     // Print linking errors if any
@@ -121,11 +137,15 @@ void Shader::linkProgram()
     if (!success)
     {
         glGetProgramInfoLog(program_, 512, NULL, infoLog);
+#if ShaderLogging
         std::cout<<" - Failed"<<std::endl;
+#endif
         std::cerr << "Shader::program::LINKING_FAILED\n" << infoLog << std::endl;
         exit(1);
     }
+#if ShaderLogging
     std::cout<<" - Successful"<<std::endl;
+#endif
 
     // Delete the shader parts -  no longer necessery
     parts_.clear();

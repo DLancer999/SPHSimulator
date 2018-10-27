@@ -75,19 +75,7 @@ public:
     //disable copy constructor
     WindowManager(const WindowManager& copy);
 
-    ~WindowManager()
-    {
-        glDeleteBuffers(1, &VBO_p_ );
-        glDeleteBuffers(1, &VBO_c_ );
-        glDeleteBuffers(1, &VBO_f_ );
-        glDeleteVertexArrays(1, &VAO_ );
-        
-        std::cout<< "destroying window" <<std::endl;
-        glfwDestroyWindow(window_);
-        
-        std::cout<< "terminating glfw" <<std::endl;
-        glfwTerminate();
-    }
+    ~WindowManager();
     
     GLFWwindow* window(){return window_;}
 

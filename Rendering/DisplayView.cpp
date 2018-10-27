@@ -17,6 +17,8 @@ License
 #include "DisplayView.hpp"
 #include "Simulation/Settings.hpp"
 
+#define GLLogging 0
+
 //********************************************************************************
 void DisplayView::keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mode*/)
 //********************************************************************************
@@ -73,6 +75,27 @@ void DisplayView::keyboard(GLFWwindow* window, int key, int /*scancode*/, int ac
     default:{}
     }
 }
+//
+//********************************************************************************
+DisplayView::WindowManager::~WindowManager()
+//********************************************************************************
+{
+    glDeleteBuffers(1, &VBO_p_ );
+    glDeleteBuffers(1, &VBO_c_ );
+    glDeleteBuffers(1, &VBO_f_ );
+    glDeleteVertexArrays(1, &VAO_ );
+    
+#if GLLogging
+    std::cout<< "destroying window" <<std::endl;
+#endif
+    glfwDestroyWindow(window_);
+    
+#if GLLogging
+    std::cout<< "terminating glfw" <<std::endl;
+#endif
+    glfwTerminate();
+}
+
 
 //********************************************************************************
 void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
@@ -103,7 +126,9 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
 	//GLFWmonitor* primary = glfwGetPrimaryMonitor();
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
+#if GLLogging
     std::cout<<"Creating window"<<std::endl;
+#endif
 	window_ = glfwCreateWindow(RenderSettings::width, RenderSettings::height, "SPH", nullptr, nullptr);    
 	if (window_ == nullptr)
 	{
@@ -113,12 +138,16 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
 	}
 	glfwMakeContextCurrent(window_);
 	// Set the required callback functions
+#if GLLogging
     std::cout<<"Setting callback functions"<<std::endl;
+#endif
 	//glfwSetMouseButtonCallback(window, mouseButton_callback);
 	glfwSetKeyCallback(window_, DisplayView::keyboard);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
+#if GLLogging
     std::cout<<"Initializing GLEW"<<std::endl;
+#endif
     glewExperimental = GL_TRUE;
     // Initialize GLEW to setup the OpenGL Function pointers
     if (glewInit() != GLEW_OK)
