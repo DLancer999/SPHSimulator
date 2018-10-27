@@ -15,6 +15,7 @@ License
 #include <glm/gtc/type_ptr.hpp>
 
 #include "DisplayView.hpp"
+#include "HardCodedShaders.hpp"
 #include "Simulation/Settings.hpp"
 
 #define GLLogging 0
@@ -157,13 +158,13 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     }    
 
     //create shader programs
-    particleShader_.compileShaderPart("Rendering/shaders/pointShader.vs",GL_VERTEX_SHADER);
-    particleShader_.compileShaderPart("Rendering/shaders/pointShader.fs",GL_FRAGMENT_SHADER);
+    particleShader_.compileShaderPart(HardCodedShader::pointShader_vs,GL_VERTEX_SHADER);
+    particleShader_.compileShaderPart(HardCodedShader::pointShader_fs,GL_FRAGMENT_SHADER);
     particleShader_.linkProgram();
 
-    forceShader_.compileShaderPart("Rendering/shaders/forceShader.vs",GL_VERTEX_SHADER);
-    forceShader_.compileShaderPart("Rendering/shaders/forceShader.gs",GL_GEOMETRY_SHADER);
-    forceShader_.compileShaderPart("Rendering/shaders/forceShader.fs",GL_FRAGMENT_SHADER);
+    forceShader_.compileShaderPart(HardCodedShader::forceShader_vs,GL_VERTEX_SHADER);
+    forceShader_.compileShaderPart(HardCodedShader::forceShader_gs,GL_GEOMETRY_SHADER);
+    forceShader_.compileShaderPart(HardCodedShader::forceShader_fs,GL_FRAGMENT_SHADER);
     forceShader_.linkProgram();
 
     // Create Vertex Buffer and Array Objects

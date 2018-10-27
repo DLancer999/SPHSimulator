@@ -58,7 +58,7 @@ public:
         }
     };
 
-    typedef std::shared_ptr<ShaderComponent> pShaderComponent;
+    using pShaderComponent = std::unique_ptr<ShaderComponent>;
 protected:
     //protected members
     GLuint program_;
@@ -101,12 +101,14 @@ public:
     }
 
     //public member functions
-	void compileShaderPart (const GLchar* sourcePath, const GLenum& shdrType); //compile each shader
-	void linkProgram(); //link shaders and program
+    void compileShaderPart (const std::string& shaderCode, const GLenum& shdrType); //compile each shader
+    void linkProgram(); //link shaders and program
 
     void use() { glUseProgram(program_); }
 
     GLuint program(){return program_;}
+
+    static std::string readFromFile(const GLchar* sourcePath); //read shader file
 };
 
 #endif

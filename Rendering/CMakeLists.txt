@@ -3,6 +3,7 @@ set(GlRendererObjects
   "DisplayView.cpp"
   "Shader.cpp"
   "WriteFunctions.cpp"
+  "HardCodedShaders.cpp"
 )
 
 find_package(PNG REQUIRED)
@@ -17,14 +18,3 @@ find_package(glfw3 REQUIRED)
 link_libraries(glfw)
 
 add_library (GlRenderer ${GlRendererObjects})
-
-ADD_DEPENDENCIES ( GlRenderer copy_shader_files )
-
-ADD_CUSTOM_TARGET(
-  copy_shader_files
-  ${CMAKE_COMMAND}
-  -D SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-  -D DESTINATION_DIR=${CMAKE_CURRENT_BINARY_DIR} 
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/copyshaders.cmake
-  COMMENT "Copying Files for target: GlRenderer" VERBATIM 
-)

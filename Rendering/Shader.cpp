@@ -37,16 +37,9 @@ std::string Shader::stringShaderType(const GLenum& shdrType)
 }
 
 //********************************************************************************
-void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
+std::string Shader::readFromFile(const GLchar* sourcePath)
 //********************************************************************************
 {
-    //stringShaderType also checks for shdrType... throws error for invalid values
-#if ShaderLogging
-    std::cout<<"Compiling "<<stringShaderType(shdrType)<<" from file \""<<sourcePath<<"\"";
-#endif
-
-    pShaderComponent shaderPart(new ShaderComponent(shdrType));
-
     // 1. Retrieve the shader source code from filePath
     std::string shaderCode;
     std::ifstream shaderFile;
@@ -69,9 +62,23 @@ void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
 #if ShaderLogging
         std::cout<<" - Failed"<<std::endl;
 #endif
-        std::cerr << "Shader::"<<stringShaderType(shdrType)<<"::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+        std::cerr << "Failed to parse "<<sourcePath<<std::endl;
         exit(1);
     }
+    return shaderCode;
+}
+//********************************************************************************
+void Shader::compileShaderPart(const std::string& shaderCode, const GLenum& shdrType)
+//********************************************************************************
+{
+    //stringShaderType also checks for shdrType... throws error for invalid values
+#if ShaderLogging
+    std::cout<<"Compiling "<<stringShaderType(shdrType)<<" from file \""<<sourcePath<<"\"";
+#endif
+
+    pShaderComponent shaderPart = std::make_unique<ShaderComponent>(shdrType);
+
+    // 1. get shader code in gl format
     const GLchar* shaderCodeCharPtr = shaderCode.c_str();
 
     // 2. Compile shaders
@@ -100,7 +107,7 @@ void Shader::compileShaderPart(const GLchar* sourcePath, const GLenum& shdrType)
 #endif
 
     // add shader part to list for linking
-    parts_.push_back(shaderPart);
+    parts_.push_back(std::move(shaderPart));
 }
 
 
