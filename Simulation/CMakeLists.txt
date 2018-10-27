@@ -4,4 +4,5 @@ set(SimulatorObjects
   "SPHSolver.cpp"
   "Kernels.cpp"
 )
+
 add_library (Simulator ${SimulatorObjects})

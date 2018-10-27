@@ -9,13 +9,9 @@ set(DEBUGFLAGS "-g")
 set(LINKFLAGS "-flto")
 set(ERRORFLAGS "-pedantic-errors")
 set(OTHERFLAGS "-std=c++17 -fopenmp")
-set(BOOSTHEADERS "-isystem/home/dlancer/Programs/boost/boostGcc/include")
-set(BOOSTLIBSDIR "-L/home/dlancer/Programs/boost/boostGcc/lib")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(OTHERFLAGS "${OTHERFLAGS} -stdlib=libc++")
-  set(BOOSTHEADERS "-isystem/home/dlancer/Programs/boost/boostClang/include")
-  set(BOOSTLIBSDIR "-L/home/dlancer/Programs/boost/boostClang/lib")
 endif()
 
 set (WARNING_FLAGS
@@ -39,8 +35,11 @@ set (WARNING_FLAGS
 	-Wvolatile-register-var  -Wwrite-strings"
 )
 
-set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} ${BOOSTHEADERS} ${OPTFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OPTFLAGS} ${LINKFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS} ${BOOSTLIBSDIR}")
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
+
+set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} ${OPTFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OPTFLAGS} ${LINKFLAGS} ${OTHERFLAGS} ${DEBUGFLAGS} ${WARNING_FLAGS} ${ERRORFLAGS}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 include_directories(.)
@@ -51,7 +50,7 @@ add_subdirectory(./Statistics)
 set(SimulatorComponents "Simulator" "GlRenderer" "TimerUtil")
 
 add_executable(SPHSimulator "SPHSimulator.cpp")
-target_link_libraries (SPHSimulator "${SimulatorComponents}")
+target_link_libraries (SPHSimulator ${SimulatorComponents} ${Boost_LIBRARIES})
 
 #no tests yet
 #enable_testing()

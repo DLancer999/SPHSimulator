@@ -3,3 +3,5 @@ compile_commands\.json
 build
 deps
 obj
+tags
+types_c.taghl
