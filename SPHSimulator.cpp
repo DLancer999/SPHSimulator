@@ -27,19 +27,24 @@ Description
 #include "Rendering/DisplayView.hpp"    
 #endif
 
+void reportTextProgress(std::ostream& os, int iStep, SPHSolver& s)
+{
+  os<<std::setprecision(2)<<std::fixed<<std::right
+    <<"Step="<<std::setw(7)<< iStep<<" "
+    <<"Time="<<std::setw(6)<<SimulationSettings::simTime<<" "
+    <<std::setprecision(5)<<std::scientific
+    <<"CFL="    <<std::setw(7)<<s.calcCFL()<<" "
+    <<"kEnergy="<<std::setw(7)<<s.calcKineticEnergy()<<" "
+    <<'\n';
+}
+
 void reportProgress(int iStep, SPHSolver& s)
 {
     static auto wrtngTimerID = Statistics::createTimer("writingTime");
 
     if (iStep%SimulationSettings::showProgressEvery==0)
     {
-        std::cout<<std::setprecision(2)<<std::fixed<<std::right
-                 <<"Step="<<std::setw(7)<< iStep<<" "
-                 <<"Time="<<std::setw(6)<<SimulationSettings::simTime<<" "
-                 <<std::setprecision(5)<<std::scientific
-                 <<"CFL="    <<std::setw(7)<<s.calcCFL()<<" "
-                 <<"kEnergy="<<std::setw(7)<<s.calcKineticEnergy()<<" "
-                 <<std::endl;
+        reportTextProgress(std::cout, iStep, s);
     }
     if (iStep%RenderSettings::printEvr==0)
     {
@@ -150,7 +155,9 @@ int main()
         }
     }
 
-    Statistics::printStatistics();
+    std::ofstream statisticsFile("performance.txt");
+    Statistics::printStatistics(statisticsFile);
+    statisticsFile.close();
 
     return 0;
 }

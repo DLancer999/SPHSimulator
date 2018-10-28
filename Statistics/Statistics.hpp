@@ -139,7 +139,7 @@ public:
         return timerID;
     }
 
-    static void printStatistics()
+    static void printStatistics(std::ostream& os = std::cout)
     {
         if (timers.empty())
           return;
@@ -154,14 +154,13 @@ public:
         );
         size_t namesWidth = (*it).name().size();
 
-        std::cout<<std::endl <<"----------------Timers Start------------------" <<std::endl;
+        os<<"\n----------------Timers Start------------------\n";
         for (const Timer& t : sortedTimers) {
-            std::cout<<std::setfill('_');
-            std::cout<<std::left<<std::setw(int(namesWidth))<<t.name()<<"::";
-            std::cout<<std::right<<std::fixed<<std::setprecision(6)
-                     <<std::setw(11)<<t.totalTime()<<" sec"<<'\n';
+            os<<std::left<<std::setw(int(namesWidth))<<t.name()<<"::";
+            os<<std::right<<std::fixed<<std::setprecision(6)
+              <<std::setw(11)<<t.totalTime()<<" sec"<<'\n';
         }
-        std::cout<<"----------------Timers End------------------" <<std::endl<<std::endl;
+        os<<"----------------Timers End------------------\n\n";
     }
 
 private:
