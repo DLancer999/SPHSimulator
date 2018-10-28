@@ -1,0 +1,21 @@
+#writing file render00000.png
+Step=   1000 Time=  0.50 CFL=1.55568e-01 kEnergy=1.37641e+03 
+Step=   2000 Time=  1.00 CFL=1.89024e-01 kEnergy=2.61239e+03 
+Step=   3000 Time=  1.50 CFL=2.94731e-01 kEnergy=2.41129e+03 
+Step=   4000 Time=  2.00 CFL=3.28853e-01 kEnergy=2.44847e+03 
+Step=   5000 Time=  2.50 CFL=1.49435e-01 kEnergy=5.56253e+02 
+Step=   6000 Time=  3.00 CFL=5.44904e-02 kEnergy=1.77147e+02 
+Step=   7000 Time=  3.50 CFL=5.56491e-02 kEnergy=4.37635e+01 
+Step=   8000 Time=  4.00 CFL=9.98638e-02 kEnergy=5.49462e+01 
+Step=   9000 Time=  4.50 CFL=2.17761e-02 kEnergy=2.74391e+01 
+Step=  10000 Time=  5.00 CFL=1.20183e-02 kEnergy=1.15941e+01 
+Step=  11000 Time=  5.50 CFL=1.28366e-02 kEnergy=1.49542e+01 
+Step=  12000 Time=  6.00 CFL=1.97332e-02 kEnergy=5.83298e+00 
+Step=  13000 Time=  6.50 CFL=1.23431e-02 kEnergy=9.72848e+00 
+Step=  14000 Time=  7.00 CFL=2.44545e-02 kEnergy=3.08265e+00 
+Step=  15000 Time=  7.50 CFL=1.59199e-02 kEnergy=4.73611e+00 
+Step=  16000 Time=  8.00 CFL=2.36764e-02 kEnergy=3.48526e+00 
+Step=  17000 Time=  8.50 CFL=2.98255e-02 kEnergy=6.85470e+00 
+Step=  18000 Time=  9.00 CFL=1.11340e-02 kEnergy=2.18912e+00 
+Step=  19000 Time=  9.50 CFL=1.69624e-02 kEnergy=3.54532e+00 
+Step=  20000 Time= 10.00 CFL=1.38284e-02 kEnergy=1.77555e+00 

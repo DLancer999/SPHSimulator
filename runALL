@@ -1,0 +1,32 @@
+#!/bin/bash
+
+compilers=(Clang Gcc)
+
+rm -rf performanceTests/performanceLogs
+mkdir  performanceTests/performanceLogs
+
+for comp in ${compilers[@]}; do
+  echo "CMakeCongif for $comp"
+  ./CMakeConfig$comp > CMakeLog$comp
+  echo "CMakeBuild for $comp"
+  ./buildProject     > buildLog$comp 2> errorLog$comp
+  cd performanceTests
+  echo "Running Tests for $comp"
+  ./runAll
+  if [ $? -ne 0 ]; then
+      echo "Aborting..."
+      exit 1
+  fi
+
+  cd tmp_performanceLogs
+  for pFile in *; do
+    cmd="mv $pFile ../performanceLogs/$pFile""_$comp.txt"
+    echo $cmd
+    eval $cmd
+  done
+  cd ..
+  rm -r tmp_performanceLogs
+
+  cd ..
+done
+

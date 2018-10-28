@@ -1,0 +1,7 @@
+rm -rf build
+rm buildLog*
+rm CMakeLog*
+rm errorLog*
+rm tags
+rm types_*
+rm -rf performanceTests/performanceLogs

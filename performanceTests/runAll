@@ -1,0 +1,24 @@
+#!/bin/bash
+
+files=(AllIn Dripping Faucet) 
+
+rm -rf tmp_performanceLogs
+mkdir  tmp_performanceLogs
+
+for file in ${files[@]}; do
+  cd $file
+  echo "Executing run in $file"
+  ./run > results.txt
+
+  corr="correctResults.txt"
+  curr="results.txt"
+  if cmp -s "$corr" "$curr";
+  then
+      echo "Comparing Resuts:: - OK -"
+  else
+      echo "Comparing Resuts:: - FAILED!! - FIX IT!!"
+      exit 1
+  fi
+  cp performance.txt ../tmp_performanceLogs/$file
+  cd ..
+done
