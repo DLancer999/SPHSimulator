@@ -13,6 +13,7 @@ License
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+#include <numeric>
 
 #include "SPHSolver.hpp"
 #include "Settings.hpp"
@@ -670,7 +671,6 @@ void SPHSolver::calcSurfForces()
     }
 }
 
-
 //********************************************************************************
 double SPHSolver::calcCFL()
 //********************************************************************************
@@ -690,3 +690,20 @@ double SPHSolver::calcCFL()
     double CFL = SimulationSettings::dt/maxDt;
     return CFL;
 }
+
+//********************************************************************************
+double SPHSolver::calcKineticEnergy()
+//********************************************************************************
+{
+    static auto kineticTimerID  = Statistics::createTimer("SPHSolver::calcKineticEnergy");
+    Statistics::TimerGuard kinetickGuard(kineticTimerID);
+
+    double kEnergy = 0.5*std::accumulate(cloud_.begin(), cloud_.end(), 0.,
+        [](double k, const Particle& p) {
+            return k + p.mass*glm::dot(p.velocity, p.velocity);
+        }
+    );
+
+    return kEnergy;
+}
+

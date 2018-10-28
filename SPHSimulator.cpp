@@ -33,9 +33,12 @@ void reportProgress(int iStep, SPHSolver& s)
 
     if (iStep%SimulationSettings::showProgressEvery==0)
     {
-        std::cout<<"Time="<<SimulationSettings::simTime<<" "
-                 <<"Step="<< iStep<<" "
-                 <<"CFL="<<s.calcCFL()<<" "
+        std::cout<<std::setprecision(2)<<std::fixed<<std::right
+                 <<"Step="<<std::setw(7)<< iStep<<" "
+                 <<"Time="<<std::setw(6)<<SimulationSettings::simTime<<" "
+                 <<std::setprecision(5)<<std::scientific
+                 <<"CFL="    <<std::setw(7)<<s.calcCFL()<<" "
+                 <<"kEnergy="<<std::setw(7)<<s.calcKineticEnergy()<<" "
                  <<std::endl;
     }
     if (iStep%RenderSettings::printEvr==0)

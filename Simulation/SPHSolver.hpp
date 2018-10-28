@@ -63,6 +63,7 @@ public:
     bool step();
 
     double calcCFL();
+    double calcKineticEnergy();
 
     std::vector<Particle>& cloud(){return cloud_;}
     HashTable& neibhs(){return neibhs_;}
