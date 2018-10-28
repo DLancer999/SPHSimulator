@@ -11,22 +11,35 @@ for comp in ${compilers[@]}; do
   echo "CMakeBuild for $comp"
   ./buildProject     > buildLog$comp 2> errorLog$comp
   cd performanceTests
-  echo "Running Tests for $comp"
-  ./runAll
-  if [ $? -ne 0 ]; then
-      echo "Aborting..."
-      exit 1
-  fi
+      for ((i=1;i<=4;i++)); 
+      do 
+          echo "Running Tests for $comp - iter $i"
+          ./runAll
+          if [ $? -ne 0 ]; then
+              echo "Aborting..."
+              exit 1
+          fi
 
-  cd tmp_performanceLogs
-  for pFile in *; do
-    cmd="mv $pFile ../performanceLogs/$pFile""_$comp.txt"
-    echo $cmd
-    eval $cmd
-  done
-  cd ..
-  rm -r tmp_performanceLogs
-
+          cd tmp_performanceLogs
+              for pFile in *; do
+                cmd="mv $pFile ../performanceLogs/$pFile""_$comp""_$i.txt"
+                echo $cmd
+                eval $cmd
+              done
+          cd ..
+          rm -r tmp_performanceLogs
+      done
   cd ..
 done
 
+cd performanceTests/performanceLogs
+    for pFile in *.txt; do
+        echo "extracting data out of $pFile"
+        bName=$(basename "$pFile" .txt)
+        csvFile=data_$bName.csv
+        echo "$bName" > $csvFile
+        awk '{print $3}' < $pFile >> $csvFile
+    done
+    paste -d , *.csv > AllPerfomanceData.csv
+    rm data_*
+cd ..
