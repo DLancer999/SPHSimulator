@@ -33,6 +33,8 @@ SourceFiles
 #include "Kernels.hpp"
 #include "Particle.hpp"
 
+#include "Statistics/Statistics.hpp"
+
 typedef std::vector< std::vector< int > > ZIndex;
 typedef std::vector< glm::ivec2 > ZMap;
 typedef std::vector< std::vector< std::vector<int> > > grid;
@@ -164,6 +166,9 @@ public:
 
     glm::ivec2 findGridPos(glm::dvec2 pos)
     {
+        static auto findGridPosTimerID= Statistics::createTimer("HashTable::findGridPos");
+        Statistics::TimerGuard findGridPosTimerGuard(findGridPosTimerID);
+
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
         while (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
@@ -176,6 +181,9 @@ public:
 
     void findNei(std::vector<Particle>& cloud, const int NParticles)
     {
+        static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");
+        Statistics::TimerGuard findNeiTimerGuard(findNeiTimerID);
+
         //find grid position of each particle
         for (int i=0;i<NParticles;i++)
         {
@@ -223,6 +231,9 @@ public:
 
     void reorderCloud(std::vector<Particle>& cloud, const int NParticles)
     {
+        static auto reorTimerID = Statistics::createTimer("HashTable::reorderTimer");
+        Statistics::TimerGuard reorderTimerGuard(reorTimerID);
+
         std::vector<Particle> newCloud(NParticles);
         std::vector<int>      oldToNewMap;
 
