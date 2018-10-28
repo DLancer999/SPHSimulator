@@ -25,8 +25,10 @@ SourceFiles
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <iomanip>
 #include <type_traits>
 #include <vector>
+#include <algorithm>
 
 class Timer
 {
@@ -55,6 +57,8 @@ public:
     , timerName_(name)
     {}
 
+    Timer(const Timer& other) = default;
+
     void start()
     {
         start_ = Clock::now();
@@ -70,6 +74,14 @@ public:
     double lapTime() const
     {
         return Duration(end_-start_).count();
+    }
+    double totalTime() const
+    {
+        return duration_.count();
+    }
+    const std::string& name() const
+    {
+        return timerName_;
     }
     void printDuration() const
     {
@@ -129,9 +141,26 @@ public:
 
     static void printStatistics()
     {
+        if (timers.empty())
+          return;
+
+        std::vector<Timer> sortedTimers = timers;
+        std::sort(sortedTimers.begin(), sortedTimers.end(),
+            [](const Timer& a, const Timer& b){ return a.totalTime() > b.totalTime(); }
+        );
+
+        auto it = std::max_element( sortedTimers.begin(), sortedTimers.end(),
+            [](const Timer& t1, const Timer& t2){ return t1.name().size() < t2.name().size(); }
+        );
+        size_t namesWidth = (*it).name().size();
+
         std::cout<<std::endl <<"----------------Timers Start------------------" <<std::endl;
-        for (const Timer& t : timers)
-            t.printDuration();
+        for (const Timer& t : sortedTimers) {
+            std::cout<<std::setfill('_');
+            std::cout<<std::left<<std::setw(int(namesWidth))<<t.name()<<"::";
+            std::cout<<std::right<<std::fixed<<std::setprecision(6)
+                     <<std::setw(11)<<t.totalTime()<<" sec"<<'\n';
+        }
         std::cout<<"----------------Timers End------------------" <<std::endl<<std::endl;
     }
 

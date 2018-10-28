@@ -110,7 +110,7 @@ void SPHSolver::WCSPHStep()
 
     //combine forces and update values
     {
-        static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::WCSPH::updatePosTimer ");
+        static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::WCSPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
 
         #pragma omp parallel for
@@ -140,7 +140,7 @@ void SPHSolver::PCISPHStep()
     calcOtherForces();
 
     {
-        static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::PCISPH::updatePosTimer ");
+        static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::PCISPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
 
         #pragma omp parallel for
@@ -595,7 +595,7 @@ void SPHSolver::calcPressForces()
 void SPHSolver::calcViscForces()
 //********************************************************************************
 {
-    static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::viscForceTimer ");
+    static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::viscForceTimer");
     Statistics::TimerGuard viscForceGuard(viscForceTimerID);
 
     #pragma omp parallel for
@@ -629,7 +629,7 @@ void SPHSolver::calcViscForces()
 void SPHSolver::calcSurfForces()
 //********************************************************************************
 {
-    static auto surfForceTimerID  = Statistics::createTimer("SPHSolver::surfForceTimer ");
+    static auto surfForceTimerID  = Statistics::createTimer("SPHSolver::surfForceTimer");
     Statistics::TimerGuard surfForceGuard(surfForceTimerID);
 
     #pragma omp parallel for

@@ -29,7 +29,7 @@ Description
 
 void reportProgress(int iStep, SPHSolver& s)
 {
-    static auto wrtngTimerID = Statistics::createTimer("writingTime  ");
+    static auto wrtngTimerID = Statistics::createTimer("writingTime");
 
     if (iStep%SimulationSettings::showProgressEvery==0)
     {
@@ -117,8 +117,8 @@ int main()
         renderImage("render", SPHsolver.cloud(), SPHsolver.neibhs());
     }
 
-    auto totalTimerID = Statistics::createTimer("totalTime    ");
-    auto compuTimerID = Statistics::createTimer("SPHSolver    ");
+    auto totalTimerID = Statistics::createTimer("totalTime");
+    auto compuTimerID = Statistics::createTimer("SPHSolver");
 
     auto SPHSolverStep  = Statistics::CountTime(compuTimerID, &SPHSolver::step);
 
