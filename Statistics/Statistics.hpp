@@ -154,13 +154,11 @@ public:
         );
         size_t namesWidth = (*it).name().size();
 
-        os<<"\n----------------Timers Start------------------\n";
         for (const Timer& t : sortedTimers) {
-            os<<std::left<<std::setw(int(namesWidth))<<t.name()<<"::";
+            os<<std::left<<std::setw(int(namesWidth))<<t.name()<<" ::";
             os<<std::right<<std::fixed<<std::setprecision(6)
               <<std::setw(11)<<t.totalTime()<<" sec"<<'\n';
         }
-        os<<"----------------Timers End------------------\n\n";
     }
 
 private:
