@@ -114,7 +114,7 @@ public:
         }
     }
 
-    void writeGridRAW(std::string fileName)
+    void writeGridRAW(std::string fileName) const
     {
         std::string fileNameGNU = fileName+".raw";
         std::cout<<"#writing file "<<fileNameGNU<<std::endl;
@@ -138,7 +138,7 @@ public:
         outfile.close();
     }
 
-    void write()
+    void write() const
     {
         for (int j=gridSize_.y-1;j>=0;j--)
         {
@@ -164,7 +164,7 @@ public:
         }
     }
 
-    glm::ivec2 findGridPos(glm::dvec2 pos)
+    glm::ivec2 findGridPos(glm::dvec2 pos) const
     {
         static auto findGridPosTimerID= Statistics::createTimer("HashTable::findGridPos");
         Statistics::TimerGuard findGridPosTimerGuard(findGridPosTimerID);
@@ -262,6 +262,16 @@ public:
 
     //return particleList of given grid cell
     std::vector<int>& neiParticlesFor(glm::ivec2 gridPos)
+    {
+        if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
+        else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
+        if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
+        else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+        return particlesIn_[gridPos.x][gridPos.y];
+    }
+
+    //return particleList of given grid cell
+    const std::vector<int>& neiParticlesFor(glm::ivec2 gridPos) const
     {
         if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
         else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
