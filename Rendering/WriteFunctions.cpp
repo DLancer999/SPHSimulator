@@ -20,7 +20,7 @@ License
 #include "Simulation/Settings.hpp"
 
 //********************************************************************************
-void writeRAWfile(std::string fileName, std::vector<Particle>& cloud)
+void writeRAWfile(std::string fileName, const std::vector<Particle>& cloud)
 //********************************************************************************
 {
     static int writeID = 0;
@@ -39,7 +39,7 @@ void writeRAWfile(std::string fileName, std::vector<Particle>& cloud)
     int NParticles = (int)cloud.size();
     for (int i=0;i<NParticles;i++)
     {
-        Particle& iParticle = cloud[i];
+        const Particle& iParticle = cloud[i];
         outfile<<std::scientific;
         outfile<<i<<"\t"                    
                <<iParticle.position.x<<"\t" 
@@ -67,7 +67,7 @@ glm::ivec3 floatToIntColor(glm::vec3 fCol, int res)
 }
 
 //********************************************************************************
-void writePNG(std::string fileName, std::vector<glm::vec3>& color)
+void writePNG(std::string fileName, const std::vector<glm::vec3>& color)
 //********************************************************************************
 {
     fileName += ".png";
@@ -137,7 +137,7 @@ void writePNG(std::string fileName, std::vector<glm::vec3>& color)
 }
 
 //********************************************************************************
-void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& neibhs)
+void renderImage(std::string fileName, const std::vector<Particle>& cloud, const HashTable& neibhs)
 //********************************************************************************
 {
     static int writeID = 0;
@@ -178,11 +178,11 @@ void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& 
                 {
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
-                        std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
+                        const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
                         int nNei = (int)neiParts.size();
                         for (int neiPart=0;neiPart<nNei;neiPart++)
                         {
-                            Particle& neiParticle = cloud[neiParts[neiPart]];
+                            const Particle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);
                             if (dist>1.e-10) 
                             {
@@ -230,11 +230,11 @@ void renderImage(std::string fileName, std::vector<Particle>& cloud, HashTable& 
                 {
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
-                        std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
+                        const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
                         int nNei = (int)neiParts.size();
                         for (int neiPart=0;neiPart<nNei;neiPart++)
                         {
-                            Particle& neiParticle = cloud[neiParts[neiPart]];
+                            const Particle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);
                             if (dist<SPHSettings::initDx*0.4) inFluid=true;
                             if (inFluid) 
