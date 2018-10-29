@@ -32,6 +32,8 @@ protected:
     M boxMinPos_;
     M boxMaxPos_;
     M delta_;
+
+    using CoordinateType = typename M::value_type;
 public:
     BoundingBox():
     boxMinPos_(0.0),
@@ -52,16 +54,16 @@ public:
         delta_     = maxPos-minPos;
     }
     
-    const M& minPos() const {return boxMinPos_;}
-    const M& maxPos() const {return boxMaxPos_;}
-    const M& delta () const {return delta_;}
+    const M& minPos() const { return boxMinPos_;}
+    const M& maxPos() const { return boxMaxPos_;}
+    const M& delta () const { return delta_;}
 
-    const typename M::value_type& minX() const { return boxMinPos_.x; }
-    const typename M::value_type& minY() const { return boxMinPos_.y; }
-    const typename M::value_type& maxX() const { return boxMaxPos_.x; }
-    const typename M::value_type& maxY() const { return boxMaxPos_.y; }
-    const typename M::value_type& dx()   const { return delta_.x; }
-    const typename M::value_type& dy()   const { return delta_.y; }
+    const CoordinateType& minX() const { return boxMinPos_.x; }
+    const CoordinateType& minY() const { return boxMinPos_.y; }
+    const CoordinateType& maxX() const { return boxMaxPos_.x; }
+    const CoordinateType& maxY() const { return boxMaxPos_.y; }
+    const CoordinateType& dx()   const { return delta_.x; }
+    const CoordinateType& dy()   const { return delta_.y; }
 };
 
 #endif
