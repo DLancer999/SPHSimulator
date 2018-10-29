@@ -104,9 +104,9 @@ public:
     void compileShaderPart (const std::string& shaderCode, const GLenum& shdrType); //compile each shader
     void linkProgram(); //link shaders and program
 
-    void use() { glUseProgram(program_); }
+    void use() const { glUseProgram(program_); }
 
-    GLuint program(){return program_;}
+    GLuint program() const {return program_;}
 
     static std::string readFromFile(const GLchar* sourcePath); //read shader file
 };
