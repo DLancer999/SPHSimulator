@@ -62,11 +62,13 @@ public:
     void init();
     bool step();
 
-    double calcCFL();
-    double calcKineticEnergy();
+    double calcCFL() const;
+    double calcKineticEnergy() const;
 
-    std::vector<Particle>& cloud(){return cloud_;}
-    HashTable& neibhs(){return neibhs_;}
+          std::vector<Particle>& cloud()       { return cloud_; }
+    const std::vector<Particle>& cloud() const { return cloud_; }
+          HashTable& neibhs()       {return neibhs_;}
+    const HashTable& neibhs() const {return neibhs_;}
     const int& NParticles() const {return activeParticles_;}
 };
 #endif

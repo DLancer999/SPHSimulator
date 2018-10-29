@@ -672,7 +672,7 @@ void SPHSolver::calcSurfForces()
 }
 
 //********************************************************************************
-double SPHSolver::calcCFL()
+double SPHSolver::calcCFL() const
 //********************************************************************************
 {
     static auto clfTimerID  = Statistics::createTimer("SPHSolver::calcCFL");
@@ -692,7 +692,7 @@ double SPHSolver::calcCFL()
 }
 
 //********************************************************************************
-double SPHSolver::calcKineticEnergy()
+double SPHSolver::calcKineticEnergy() const
 //********************************************************************************
 {
     static auto kineticTimerID  = Statistics::createTimer("SPHSolver::calcKineticEnergy");
