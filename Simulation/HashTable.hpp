@@ -35,9 +35,52 @@ SourceFiles
 
 #include "Statistics/Statistics.hpp"
 
-typedef std::vector< std::vector< int > > ZIndex;
 typedef std::vector< glm::ivec2 > ZMap;
-typedef std::vector< std::vector< std::vector<int> > > grid;
+
+template <typename T>
+class Matrix
+{
+public:
+  using iterator       = typename std::vector<T>::iterator;
+  using const_iterator = typename std::vector<T>::const_iterator;
+  iterator       begin()        { return _data.begin(); }
+  const_iterator begin()  const { return _data.begin(); }
+  const_iterator cbegin() const { return _data.cbegin(); }
+  iterator       end()        { return _data.end(); }
+  const_iterator end()  const { return _data.end(); }
+  const_iterator cend() const { return _data.cend(); }
+
+  Matrix() :_data() ,_sizeX(0) ,_sizeY(0) {};
+  Matrix(const Matrix&) = default;
+  Matrix(Matrix&&)      = default;
+  ~Matrix() = default;
+  Matrix& operator=(const Matrix&) = default;
+  Matrix& operator=(Matrix&&)      = default;
+
+  void resize(size_t sizeX, size_t sizeY)
+  {
+    _sizeX = sizeX;
+    _sizeY = sizeY;
+    _data.resize(sizeX*sizeY, T{});
+  }
+  void clear()
+  {
+    _data.clear();
+  }
+
+  T& operator()(size_t i, size_t j) {
+    return _data[i*_sizeY + j];
+  }
+
+  const T& operator()(size_t i, size_t j) const {
+    return _data[i*_sizeY + j];
+  }
+
+private:
+  std::vector<T> _data;
+  size_t _sizeX;
+  size_t _sizeY;
+};
 
 class HashTable
 {
@@ -59,8 +102,8 @@ public:
     
 
 private:
-    grid   particlesIn_;
-    ZIndex gridZindex_;
+    Matrix<std::vector<int>> particlesIn_;
+    Matrix<int> gridZindex_;
     ZMap   gridZMap_;
     glm::dvec2 minPos_;
     glm::ivec2 gridSize_;
@@ -81,11 +124,7 @@ public:
         gridSize_.x = int(floor(dx.x*Kernel::SmoothingLength::dh))+2;
         gridSize_.y = int(floor(dx.y*Kernel::SmoothingLength::dh))+2;
 
-        particlesIn_.resize(gridSize_.x);
-        for (int i=0;i<gridSize_.x;i++)
-        {
-            particlesIn_[i].resize(gridSize_.y);
-        }
+        particlesIn_.resize(gridSize_.x, gridSize_.y);
 
         int ZMapSize = std::max(gridSize_.x,gridSize_.y);
         int pow2 = 0;
@@ -101,14 +140,13 @@ public:
         gridZMap_.resize(ZMapSize);
         for (int i=0;i<ZMapSize;i++) gridZMap_[i] = glm::ivec2(-1,-1);
 
-        gridZindex_.resize(gridSize_.x);
+        gridZindex_.resize(gridSize_.x, gridSize_.y);
         for (int i=0;i<gridSize_.x;i++)
         {
-            gridZindex_[i].resize(gridSize_.y);
             for (int j=0;j<gridSize_.y;j++)
             {
                 int Zindex = JoinBits(i,j);
-                gridZindex_[i][j]=Zindex;
+                gridZindex_(i,j)=Zindex;
                 gridZMap_[Zindex] = glm::ivec2(i,j);
             }
         }
@@ -144,7 +182,7 @@ public:
         {
             for (int i=0;i<gridSize_.x;i++)
             {
-                std::cout<<" "<<particlesIn_[i][j].size();
+                std::cout<<" "<<particlesIn_(i,j).size();
             }
             std::cout<<std::endl;
         }
@@ -158,8 +196,8 @@ public:
             #pragma omp parallel for
             for (int j=0;j<gridSize_.y;j++)
             {
-                if(particlesIn_[i][j].size())
-                    particlesIn_[i][j].clear();
+                if(particlesIn_(i,j).size())
+                    particlesIn_(i,j).clear();
             }
         }
     }
@@ -195,7 +233,7 @@ public:
             while (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
             while (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
 
-            particlesIn_[gridPos.x][gridPos.y].push_back(i);
+            particlesIn_(gridPos.x,gridPos.y).push_back(i);
             cloud[i].gridPos = gridPos;
         }
 
@@ -203,25 +241,26 @@ public:
         #pragma omp parallel for
         for (int i=0;i<NParticles;i++)
         {
+            auto& iParticle = cloud[i];
             for (int iGrid=-1;iGrid<2;iGrid++)
             {
                 for (int jGrid=-1;jGrid<2;jGrid++)
                 {
-                    glm::ivec2 gridPos = cloud[i].gridPos + glm::ivec2(iGrid,jGrid);
+                    glm::ivec2 gridPos = iParticle.gridPos + glm::ivec2(iGrid,jGrid);
 
                     if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
                     else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
                     if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
                     else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
 
-                    int nNei = (int)particlesIn_[gridPos.x][gridPos.y].size();
-                    for (int iNei=0;iNei<nNei;iNei++)
+                    const size_t nNei = particlesIn_(gridPos.x,gridPos.y).size();
+                    for (size_t iNei=0;iNei<nNei;iNei++)
                     {
-                        int neiPos = particlesIn_[gridPos.x][gridPos.y][iNei];
-                        double dist2 = glm::length2(cloud.at(i).position - cloud.at(neiPos).position);
+                        const int neiPos = particlesIn_(gridPos.x,gridPos.y)[iNei];
+                        const double dist2 = glm::length2(iParticle.position - cloud[neiPos].position);
                         if (dist2 < Kernel::SmoothingLength::h2)
                         {
-                            cloud[i].nei.push_back(Neigbhor(neiPos));
+                            iParticle.nei.push_back(Neigbhor(neiPos));
                         }
                     }
                 }
@@ -242,21 +281,21 @@ public:
         {
             glm::ivec2 gridPos = gridZMap_[iZ];
             if (gridPos.x<0) continue;
-            const int NPartsInCell = (int)particlesIn_[gridPos.x][gridPos.y].size();
+            const int NPartsInCell = (int)particlesIn_(gridPos.x,gridPos.y).size();
             for (int iPart=0;iPart<NPartsInCell;iPart++)
             {
-                oldToNewMap.push_back(particlesIn_[gridPos.x][gridPos.y][iPart]);
+                oldToNewMap.push_back(particlesIn_(gridPos.x,gridPos.y)[iPart]);
             }
         }
 
         for (int iPart=0;iPart<NParticles;iPart++)
         {
-            newCloud.at(iPart) = cloud.at(oldToNewMap[iPart]);
+            newCloud[iPart] = cloud[oldToNewMap[iPart]];
         }
 
         for (int iPart=0;iPart<NParticles;iPart++)
         {
-            cloud.at(iPart) = newCloud.at(iPart);
+            cloud[iPart] = newCloud[iPart];
         }
     }
 
@@ -267,7 +306,7 @@ public:
         else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
         if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
         else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
-        return particlesIn_[gridPos.x][gridPos.y];
+        return particlesIn_(gridPos.x,gridPos.y);
     }
 
     //return particleList of given grid cell
@@ -277,7 +316,7 @@ public:
         else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
         if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
         else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
-        return particlesIn_[gridPos.x][gridPos.y];
+        return particlesIn_(gridPos.x,gridPos.y);
     }
 };
 
