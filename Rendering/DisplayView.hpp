@@ -77,7 +77,8 @@ public:
 
     ~WindowManager();
     
-    GLFWwindow* window(){return window_;}
+          GLFWwindow* window()       {return window_;}
+    const GLFWwindow* window() const {return window_;}
 
     //used to render forces on particles
     glm::dvec2 calcMaxForce(std::vector<glm::vec2>& force);
@@ -85,7 +86,7 @@ public:
 
     //basic render functions
     void init(std::vector<Particle>& cloud);
-    bool renderParticles(std::vector<Particle>& cloud, const int NParticles);
+    bool renderParticles(const std::vector<Particle>& cloud, const int NParticles);
 
     //time-checks
     bool shouldRender(){renderTimer_.end();       return (renderTimer_.lapTime()>16.66e-3);}
