@@ -28,53 +28,9 @@ SourceFiles
 #include <string>
 
 #include "Particle.hpp"
+#include "Util/Matrix.hpp"
 
 typedef std::vector< glm::ivec2 > ZMap;
-
-template <typename T>
-class Matrix
-{
-public:
-  using iterator       = typename std::vector<T>::iterator;
-  using const_iterator = typename std::vector<T>::const_iterator;
-  iterator       begin()        { return _data.begin(); }
-  const_iterator begin()  const { return _data.begin(); }
-  const_iterator cbegin() const { return _data.cbegin(); }
-  iterator       end()        { return _data.end(); }
-  const_iterator end()  const { return _data.end(); }
-  const_iterator cend() const { return _data.cend(); }
-
-  Matrix() :_data() ,_sizeX(0) ,_sizeY(0) {};
-  Matrix(const Matrix&) = default;
-  Matrix(Matrix&&)      = default;
-  ~Matrix() = default;
-  Matrix& operator=(const Matrix&) = default;
-  Matrix& operator=(Matrix&&)      = default;
-
-  void resize(size_t sizeX, size_t sizeY)
-  {
-    _sizeX = sizeX;
-    _sizeY = sizeY;
-    _data.resize(sizeX*sizeY, T{});
-  }
-  void clear()
-  {
-    _data.clear();
-  }
-
-  T& operator()(size_t i, size_t j) {
-    return _data[i*_sizeY + j];
-  }
-
-  const T& operator()(size_t i, size_t j) const {
-    return _data[i*_sizeY + j];
-  }
-
-private:
-  std::vector<T> _data;
-  size_t _sizeX;
-  size_t _sizeY;
-};
 
 class HashTable
 {
@@ -82,8 +38,8 @@ public:
     static int JoinBits(int a, int b);
 
 private:
-    Matrix<std::vector<unsigned>> particlesIn_;
-    Matrix<int> gridZindex_;
+    Util::Matrix<std::vector<unsigned>> particlesIn_;
+    Util::Matrix<int> gridZindex_;
     ZMap   gridZMap_;
     glm::dvec2 minPos_;
     glm::uvec2 gridSize_;
