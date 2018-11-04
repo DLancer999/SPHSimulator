@@ -19,8 +19,8 @@ License
 SPHSettings::Solver SPHSettings::SPHstep = SPHSettings::Solver::WCSPH;
 
 //field Particles
-int SPHSettings::LParticles = 0;
-int SPHSettings::NParticles = 0;
+unsigned SPHSettings::LParticles = 0;
+unsigned SPHSettings::NParticles = 0;
       
 double SPHSettings::initDx = 0.;
 
@@ -72,8 +72,8 @@ void SPHSettings::readSettings()
     options_description SimSet("Settings");
     SimSet.add_options()
         ("SPHSettings.StepSolver",      value<std::string>(&SPHstepMethod))
-        ("SPHSettings.LParticles",      value<int>(&LParticles))
-        ("SPHSettings.NParticles",      value<int>(&NParticles))
+        ("SPHSettings.LParticles",      value<unsigned>(&LParticles))
+        ("SPHSettings.NParticles",      value<unsigned>(&NParticles))
         ("SPHSettings.initDx",          value<double>(&initDx))
         ("SPHSettings.particleDensity", value<double>(&particleDensity))
         ("SPHSettings.stiffness",       value<double>(&stiffness))

@@ -151,14 +151,14 @@ glm::ivec2 HashTable::findGridPos(glm::dvec2 pos) const
 }
 
 //********************************************************************************
-void HashTable::findNei(std::vector<Particle>& cloud, const int NParticles)
+void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
 //********************************************************************************
 {
     static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");
     Statistics::TimerGuard findNeiTimerGuard(findNeiTimerID);
 
     //find grid position of each particle
-    for (int i=0;i<NParticles;i++)
+    for (unsigned i=0;i<NParticles;i++)
     {
         glm::dvec2 pos = cloud[i].position;
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
@@ -174,7 +174,7 @@ void HashTable::findNei(std::vector<Particle>& cloud, const int NParticles)
 
     //find nei of each particle
     #pragma omp parallel for
-    for (int i=0;i<NParticles;i++)
+    for (unsigned i=0;i<NParticles;i++)
     {
         auto& iParticle = cloud[i];
         for (int iGrid=-1;iGrid<2;iGrid++)
@@ -204,7 +204,7 @@ void HashTable::findNei(std::vector<Particle>& cloud, const int NParticles)
 }
 
 //********************************************************************************
-void HashTable::reorderCloud(std::vector<Particle>& cloud, const int NParticles)
+void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParticles)
 //********************************************************************************
 {
     static auto reorTimerID = Statistics::createTimer("HashTable::reorderTimer");
@@ -225,12 +225,12 @@ void HashTable::reorderCloud(std::vector<Particle>& cloud, const int NParticles)
         }
     }
 
-    for (int iPart=0;iPart<NParticles;iPart++)
+    for (unsigned iPart=0;iPart<NParticles;iPart++)
     {
         newCloud[iPart] = cloud[oldToNewMap[iPart]];
     }
 
-    for (int iPart=0;iPart<NParticles;iPart++)
+    for (unsigned iPart=0;iPart<NParticles;iPart++)
     {
         cloud[iPart] = newCloud[iPart];
     }

@@ -107,7 +107,7 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     sColor_.resize(SPHSettings::NParticles);
     sForce_.resize(SPHSettings::NParticles);
 
-    for (int i=0;i<SPHSettings::NParticles;i++)
+    for (unsigned i=0;i<SPHSettings::NParticles;i++)
     {
         //sCloud.position[i] = cloud[i].position;
         sPosition_[i] = cloud[i].position;
@@ -373,7 +373,7 @@ glm::dvec2 DisplayView::WindowManager::calcMaxForce(std::vector<glm::vec2>& forc
 {
     glm::vec2 Fmax(0.0);
     float     len2Fmax=0.0;
-    for (int iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
+    for (unsigned iPart = 0;iPart<SPHSettings::NParticles;iPart++) 
     {
         if (glm::length2(force[iPart])>len2Fmax)
         {

@@ -34,7 +34,7 @@ protected:
     HashTable             neibhs_; 
 
     double delta_;           //used for PCISPH
-    int    activeParticles_;
+    unsigned activeParticles_;
 
     void generateParticles(); //activate and initialize new particles when needed
     void updateNei();         //update neibghor values
@@ -69,6 +69,6 @@ public:
     const std::vector<Particle>& cloud() const { return cloud_; }
           HashTable& neibhs()       {return neibhs_;}
     const HashTable& neibhs() const {return neibhs_;}
-    const int& NParticles() const {return activeParticles_;}
+    unsigned NParticles() const {return activeParticles_;}
 };
 #endif

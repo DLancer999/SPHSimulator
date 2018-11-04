@@ -36,8 +36,8 @@ public:
     static Solver SPHstep;
     
     //field Particles
-    static int LParticles; //used to control particle generation
-    static int NParticles; //total particles
+    static unsigned LParticles; //used to control particle generation
+    static unsigned NParticles; //total particles
           
     static double initDx; //initial particle distance
 
