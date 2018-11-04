@@ -17,6 +17,7 @@ License
 
 #include "SPHSolver.hpp"
 #include "Settings.hpp"
+#include "Kernels.hpp"
 #include "Statistics/Statistics.hpp"
 
 //********************************************************************************
