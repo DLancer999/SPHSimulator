@@ -130,7 +130,7 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
 #if GLLogging
     std::cout<<"Creating window"<<std::endl;
 #endif
-	window_ = glfwCreateWindow(RenderSettings::width, RenderSettings::height, "SPH", nullptr, nullptr);    
+	window_ = glfwCreateWindow(int(RenderSettings::width), int(RenderSettings::height), "SPH", nullptr, nullptr);    
 	if (window_ == nullptr)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -194,7 +194,7 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
     glEnableVertexAttribArray(2);
 
 	// Define the viewport dimensions
-	glViewport(0, 0, RenderSettings::width, RenderSettings::height);
+	glViewport(0, 0, int(RenderSettings::width), int(RenderSettings::height));
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -217,7 +217,7 @@ void DisplayView::WindowManager::init(std::vector<Particle>& cloud)
 }
 
 //********************************************************************************
-bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cloud, const int NParticles)
+bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cloud, const unsigned NParticles)
 //********************************************************************************
 {
     // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
@@ -228,7 +228,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
     
     //update screen positions
     #pragma omp parallel for
-    for (int iPart = 0;iPart<NParticles;iPart++) 
+    for (unsigned iPart = 0;iPart<NParticles;iPart++) 
     {
         sPosition_[iPart] = cloud[iPart].position;
 
@@ -276,7 +276,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
     GLint pointSizeLoc = glGetUniformLocation(particleShader_.program(), "pointSize");
     glUniform1f(pointSizeLoc, particleSize);
 
-    glDrawArrays(GL_POINTS, 0, SPHSettings::NParticles);
+    glDrawArrays(GL_POINTS, 0, int(SPHSettings::NParticles));
     glBindVertexArray(0);
 
     if (RenderSettings::displayRender>RenderSettings::SIMPLE)
@@ -291,7 +291,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
         if (RenderSettings::displayRender==RenderSettings::PRESSFORCES)
         {
             #pragma omp parallel for
-            for (int iPart = 0;iPart<NParticles;iPart++) 
+            for (unsigned iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Fpress;
             }
@@ -301,7 +301,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
         else if (RenderSettings::displayRender==RenderSettings::VISCFORCES)
         {
             #pragma omp parallel for
-            for (int iPart = 0;iPart<NParticles;iPart++) 
+            for (unsigned iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Fvisc;
             }
@@ -311,7 +311,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
         else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
         {
             #pragma omp parallel for
-            for (int iPart = 0;iPart<NParticles;iPart++) 
+            for (unsigned iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Fsurf;
             }
@@ -321,7 +321,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
         else if (RenderSettings::displayRender==RenderSettings::OTHERFORCES)
         {
             #pragma omp parallel for
-            for (int iPart = 0;iPart<NParticles;iPart++) 
+            for (unsigned iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Fother;
             }
@@ -332,7 +332,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
         else if (RenderSettings::displayRender==RenderSettings::ALLFORCES)
         {
             #pragma omp parallel for
-            for (int iPart = 0;iPart<NParticles;iPart++) 
+            for (unsigned iPart = 0;iPart<NParticles;iPart++) 
             {
                 sForce_[iPart] = cloud[iPart].Ftot;
             }
@@ -349,7 +349,7 @@ bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cl
 
         GLint scaleLoc = glGetUniformLocation(forceShader_.program(), "scale");
         glUniform1f(scaleLoc, calcScale(Fmax));
-        glDrawArrays(GL_POINTS, 0, SPHSettings::NParticles);
+        glDrawArrays(GL_POINTS, 0, int(SPHSettings::NParticles));
         glBindVertexArray(0);
     }
     

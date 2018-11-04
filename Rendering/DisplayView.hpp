@@ -86,7 +86,7 @@ public:
 
     //basic render functions
     void init(std::vector<Particle>& cloud);
-    bool renderParticles(const std::vector<Particle>& cloud, const int NParticles);
+    bool renderParticles(const std::vector<Particle>& cloud, const unsigned NParticles);
 
     //time-checks
     bool shouldRender(){renderTimer_.end();       return (renderTimer_.lapTime()>16.66e-3);}

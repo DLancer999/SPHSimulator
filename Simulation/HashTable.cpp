@@ -191,7 +191,7 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
                 const size_t nNei = particlesIn_(gridPos.x,gridPos.y).size();
                 for (size_t iNei=0;iNei<nNei;iNei++)
                 {
-                    const int neiPos = particlesIn_(gridPos.x,gridPos.y)[iNei];
+                    const unsigned neiPos = particlesIn_(gridPos.x,gridPos.y)[iNei];
                     const double dist2 = glm::length2(iParticle.position - cloud[neiPos].position);
                     if (dist2 < Kernel::SmoothingLength::h2)
                     {
@@ -211,15 +211,15 @@ void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParti
     Statistics::TimerGuard reorderTimerGuard(reorTimerID);
 
     std::vector<Particle> newCloud(NParticles);
-    std::vector<int>      oldToNewMap;
+    std::vector<unsigned> oldToNewMap;
 
     const int NZcells = (int)gridZMap_.size();
     for (int iZ=0;iZ<NZcells;iZ++)
     {
         glm::ivec2 gridPos = gridZMap_[iZ];
         if (gridPos.x<0) continue;
-        const int NPartsInCell = (int)particlesIn_(gridPos.x,gridPos.y).size();
-        for (int iPart=0;iPart<NPartsInCell;iPart++)
+        const unsigned NPartsInCell = unsigned(particlesIn_(gridPos.x,gridPos.y).size());
+        for (unsigned iPart=0;iPart<NPartsInCell;iPart++)
         {
             oldToNewMap.push_back(particlesIn_(gridPos.x,gridPos.y)[iPart]);
         }
@@ -237,7 +237,7 @@ void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParti
 }
 
 //********************************************************************************
-std::vector<int>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
+std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
 //********************************************************************************
 {
     if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
@@ -248,7 +248,7 @@ std::vector<int>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
 }
 
 //********************************************************************************
-const std::vector<int>& HashTable::neiParticlesFor(glm::ivec2 gridPos) const
+const std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos) const
 //********************************************************************************
 {
     if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }

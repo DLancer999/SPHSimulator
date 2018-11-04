@@ -82,7 +82,7 @@ public:
     static int JoinBits(int a, int b);
 
 private:
-    Matrix<std::vector<int>> particlesIn_;
+    Matrix<std::vector<unsigned>> particlesIn_;
     Matrix<int> gridZindex_;
     ZMap   gridZMap_;
     glm::dvec2 minPos_;
@@ -113,8 +113,8 @@ public:
     void reorderCloud(std::vector<Particle>& cloud, const unsigned NParticles);
 
     //return particleList of given grid cell
-    std::vector<int>& neiParticlesFor(glm::ivec2 gridPos);
-    const std::vector<int>& neiParticlesFor(glm::ivec2 gridPos) const;
+    std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos);
+    const std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos) const;
 };
 
 #endif

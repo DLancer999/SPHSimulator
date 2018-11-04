@@ -178,7 +178,7 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
                 {
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
-                        const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
+                        const std::vector<unsigned>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
@@ -230,7 +230,7 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
                 {
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
-                        const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
+                        const std::vector<unsigned>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
