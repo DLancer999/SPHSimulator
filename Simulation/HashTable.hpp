@@ -86,7 +86,7 @@ private:
     Matrix<int> gridZindex_;
     ZMap   gridZMap_;
     glm::dvec2 minPos_;
-    glm::ivec2 gridSize_;
+    glm::uvec2 gridSize_;
 
 public:
     HashTable():

@@ -46,29 +46,29 @@ void HashTable::setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
 //********************************************************************************
 {
     minPos_ = minPos-glm::dvec2(Kernel::SmoothingLength::h);
-    gridSize_.x = int(floor(dx.x*Kernel::SmoothingLength::dh))+2;
-    gridSize_.y = int(floor(dx.y*Kernel::SmoothingLength::dh))+2;
+    gridSize_.x = unsigned(floor(dx.x*Kernel::SmoothingLength::dh))+2;
+    gridSize_.y = unsigned(floor(dx.y*Kernel::SmoothingLength::dh))+2;
 
     particlesIn_.resize(gridSize_.x, gridSize_.y);
 
-    int ZMapSize = std::max(gridSize_.x,gridSize_.y);
-    int pow2 = 0;
+    unsigned ZMapSize = std::max(gridSize_.x,gridSize_.y);
+    unsigned pow2 = 0;
     while (ZMapSize>0)
     {
         ZMapSize>>=1;
         pow2++;
     }
     ZMapSize=1;
-    for (int i=0;i<pow2;i++) ZMapSize<<=1;
+    for (unsigned i=0;i<pow2;i++) ZMapSize<<=1;
     ZMapSize*=ZMapSize;
 
     gridZMap_.resize(ZMapSize);
-    for (int i=0;i<ZMapSize;i++) gridZMap_[i] = glm::ivec2(-1,-1);
+    for (unsigned i=0;i<ZMapSize;i++) gridZMap_[i] = glm::ivec2(-1,-1);
 
     gridZindex_.resize(gridSize_.x, gridSize_.y);
-    for (int i=0;i<gridSize_.x;i++)
+    for (unsigned i=0;i<gridSize_.x;i++)
     {
-        for (int j=0;j<gridSize_.y;j++)
+        for (unsigned j=0;j<gridSize_.y;j++)
         {
             int Zindex = JoinBits(i,j);
             gridZindex_(i,j)=Zindex;
@@ -84,9 +84,9 @@ void HashTable::writeGridRAW(std::string fileName) const
     std::string fileNameGNU = fileName+".raw";
     std::cout<<"#writing file "<<fileNameGNU<<std::endl;
     std::ofstream outfile (fileNameGNU.c_str(),std::ofstream::binary);
-    for (int i=0;i<gridSize_.x;i++)
+    for (unsigned i=0;i<gridSize_.x;i++)
     {
-        for (int j=0;j<gridSize_.y;j++)
+        for (unsigned j=0;j<gridSize_.y;j++)
         {
             glm::dvec2 point1 = minPos_+glm::dvec2((i  )*Kernel::SmoothingLength::h,(j  )*Kernel::SmoothingLength::h);
             glm::dvec2 point2 = minPos_+glm::dvec2((i+1)*Kernel::SmoothingLength::h,(j  )*Kernel::SmoothingLength::h);
@@ -107,9 +107,9 @@ void HashTable::writeGridRAW(std::string fileName) const
 void HashTable::write() const
 //********************************************************************************
 {
-    for (int j=gridSize_.y-1;j>=0;j--)
+    for (unsigned j=0;j<gridSize_.y;j++)
     {
-        for (int i=0;i<gridSize_.x;i++)
+        for (unsigned i=0;i<gridSize_.x;i++)
         {
             std::cout<<" "<<particlesIn_(i,j).size();
         }
@@ -122,10 +122,10 @@ void HashTable::clear()
 //********************************************************************************
 {
     #pragma omp parallel for
-    for (int i=0;i<gridSize_.x;i++)
+    for (unsigned i=0;i<gridSize_.x;i++)
     {
         #pragma omp parallel for
-        for (int j=0;j<gridSize_.y;j++)
+        for (unsigned j=0;j<gridSize_.y;j++)
         {
             if(particlesIn_(i,j).size())
                 particlesIn_(i,j).clear();
@@ -142,10 +142,10 @@ glm::ivec2 HashTable::findGridPos(glm::dvec2 pos) const
 
     glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
     glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
-    while (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
-    while (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
-    while (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
-    while (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+    while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+    while (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+    while (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+    while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
     return gridPos;
 }
@@ -163,10 +163,10 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
         glm::dvec2 pos = cloud[i].position;
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
-        while (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
-        while (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
-        while (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
-        while (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+        while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+        while (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+        while (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+        while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
         particlesIn_(gridPos.x,gridPos.y).push_back(i);
         cloud[i].gridPos = gridPos;
@@ -183,10 +183,10 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
             {
                 glm::ivec2 gridPos = iParticle.gridPos + glm::ivec2(iGrid,jGrid);
 
-                if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
-                else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
-                if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
-                else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+                if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+                else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+                if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+                else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
                 const size_t nNei = particlesIn_(gridPos.x,gridPos.y).size();
                 for (size_t iNei=0;iNei<nNei;iNei++)
@@ -213,8 +213,8 @@ void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParti
     std::vector<Particle> newCloud(NParticles);
     std::vector<unsigned> oldToNewMap;
 
-    const int NZcells = (int)gridZMap_.size();
-    for (int iZ=0;iZ<NZcells;iZ++)
+    const unsigned NZcells = unsigned(gridZMap_.size());
+    for (unsigned iZ=0;iZ<NZcells;iZ++)
     {
         glm::ivec2 gridPos = gridZMap_[iZ];
         if (gridPos.x<0) continue;
@@ -240,10 +240,10 @@ void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParti
 std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
 //********************************************************************************
 {
-    if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
-    else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
-    if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
-    else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
     return particlesIn_(gridPos.x,gridPos.y);
 }
 
@@ -251,9 +251,9 @@ std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
 const std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos) const
 //********************************************************************************
 {
-    if      (gridPos.x<      0     ){ gridPos.x+=gridSize_.x; }
-    else if (gridPos.x>=gridSize_.x){ gridPos.x-=gridSize_.x; }
-    if      (gridPos.y<      0     ){ gridPos.y+=gridSize_.y; }
-    else if (gridPos.y>=gridSize_.y){ gridPos.y-=gridSize_.y; }
+    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
     return particlesIn_(gridPos.x,gridPos.y);
 }
