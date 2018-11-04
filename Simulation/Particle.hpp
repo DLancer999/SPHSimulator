@@ -30,16 +30,16 @@ class Neigbhor
 public:
     glm::dvec2 dir;
     double     dist;
-    int        ID;
+    unsigned   ID;
 
 public:
     Neigbhor():
     dir(0.0),
     dist(0.0),
-    ID(-1)
+    ID(0)
     {}
 
-    Neigbhor(const int neiID):
+    Neigbhor(const unsigned neiID):
     dir(0.0),
     dist(0.0),
     ID(neiID)

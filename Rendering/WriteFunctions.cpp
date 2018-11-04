@@ -36,8 +36,8 @@ void writeRAWfile(std::string fileName, const std::vector<Particle>& cloud)
     std::ofstream outfile (fileNameRAW.c_str(),std::ofstream::binary);
     outfile<<"#ID x y u v dens Fpress-x,y Fvisc-x,y Fother-x,y\n";
     
-    int NParticles = (int)cloud.size();
-    for (int i=0;i<NParticles;i++)
+    const unsigned NParticles = unsigned(cloud.size());
+    for (unsigned i=0;i<NParticles;i++)
     {
         const Particle& iParticle = cloud[i];
         outfile<<std::scientific;
@@ -105,7 +105,7 @@ void writePNG(std::string fileName, const std::vector<glm::vec3>& color)
 
     png_init_io(png_ptr, outfile);
     // Write header (8 bit colour depth)
-    png_set_IHDR(png_ptr, info_ptr, RenderSettings::width, RenderSettings::height,
+    png_set_IHDR(png_ptr, info_ptr, unsigned(RenderSettings::width), unsigned(RenderSettings::height),
         8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
@@ -115,14 +115,14 @@ void writePNG(std::string fileName, const std::vector<glm::vec3>& color)
     row = (png_bytep) malloc(3 * RenderSettings::width * sizeof(png_byte));
 
     // Write image data
-    for (int j=0 ; j<RenderSettings::height ; j++) 
+    for (unsigned j=0 ; j<RenderSettings::height ; j++) 
     {
-        for (int i=0 ; i<RenderSettings::width ; i++) 
+        for (unsigned i=0 ; i<RenderSettings::width ; i++) 
         {
             glm::ivec3 iColor = floatToIntColor(color[j*RenderSettings::width+i],256);
-            row[i*3+0] = char(std::min(iColor.r,255));
-            row[i*3+1] = char(std::min(iColor.g,255));
-            row[i*3+2] = char(std::min(iColor.b,255));
+            row[i*3+0] = (unsigned char)(std::min(iColor.r,255));
+            row[i*3+1] = (unsigned char)(std::min(iColor.g,255));
+            row[i*3+2] = (unsigned char)(std::min(iColor.b,255));
         }
         png_write_row(png_ptr, row);
     }
@@ -162,12 +162,12 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
     //metaball apprach
     if (RenderSettings::fileRender==RenderSettings::METABALL)
     {
-        for (int j=0;j<RenderSettings::height;j++)
+        for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
-            for (int i=0;i<RenderSettings::width;i++)
+            for (unsigned i=0;i<RenderSettings::width;i++)
             {
-                int iNode = j*RenderSettings::width+i;
+                unsigned iNode = j*RenderSettings::width+i;
                 pixelColor[iNode] = glm::vec3(0.0f);
                 potential = 0.;
                 inFluid = false;
@@ -179,8 +179,8 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
                         const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
-                        int nNei = (int)neiParts.size();
-                        for (int neiPart=0;neiPart<nNei;neiPart++)
+                        const unsigned nNei = unsigned(neiParts.size());
+                        for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
                             const Particle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);
@@ -214,12 +214,12 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
     //point shader approach
     else if (RenderSettings::fileRender==RenderSettings::DISCRETE)
     {
-        for (int j=0;j<RenderSettings::height;j++)
+        for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
-            for (int i=0;i<RenderSettings::width;i++)
+            for (unsigned i=0;i<RenderSettings::width;i++)
             {
-                int iNode = j*RenderSettings::width+i;
+                unsigned iNode = j*RenderSettings::width+i;
                 pixelColor[iNode] = glm::vec3(0.0f);
                 potential = 0.;
                 inFluid = false;
@@ -231,8 +231,8 @@ void renderImage(std::string fileName, const std::vector<Particle>& cloud, const
                     for (int jNei=-1;jNei<=1;jNei++)
                     {
                         const std::vector<int>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
-                        int nNei = (int)neiParts.size();
-                        for (int neiPart=0;neiPart<nNei;neiPart++)
+                        const unsigned nNei = unsigned(neiParts.size());
+                        for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
                             const Particle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);

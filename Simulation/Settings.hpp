@@ -124,8 +124,8 @@ public:
         ALLFORCES    //render the particles + totalForce
     };
     static BoundingBox<glm::vec2> displayBox; //rendering window
-    static int width;                         //width resolution
-    static int height;                        //height resolution
+    static unsigned width;                         //width resolution
+    static unsigned height;                        //height resolution
     static int printEvr;                      //write file every ... timesteps
     static FileRenderType fileRender;
     static DisplayRenderType displayRender;

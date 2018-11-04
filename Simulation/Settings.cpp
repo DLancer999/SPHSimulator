@@ -53,8 +53,8 @@ double                  BoundaryConditions::bndConditionRange = 0.;
 
 
 //----------------RenderSettings-----------------//
-int RenderSettings::width  = 0;
-int RenderSettings::height = 0;
+unsigned RenderSettings::width  = 0;
+unsigned RenderSettings::height = 0;
 int RenderSettings::printEvr= 0; //print to file
 RenderSettings::FileRenderType    RenderSettings::fileRender= RenderSettings::RAWDATA;
 RenderSettings::DisplayRenderType RenderSettings::displayRender= RenderSettings::SIMPLE;
@@ -198,8 +198,8 @@ void RenderSettings::readSettings()
     std::ifstream Config_File("RenderConfig.ini");
     options_description RenderSet("Settings");
     RenderSet.add_options()
-        ("Rendering.width",      value<int>(&width))
-        ("Rendering.height",     value<int>(&height))
+        ("Rendering.width",      value<unsigned>(&width))
+        ("Rendering.height",     value<unsigned>(&height))
         ("Rendering.printEvery", value<int>(&printEvr))
         ("Rendering.renderToFileAs",     value<std::string>(&fileRenderMode))
         ("Rendering.initRenderToScreen", value<std::string>(&displayRenderMode));
