@@ -19,27 +19,8 @@ License
 #include "HashTable.hpp"
 
 #include "Statistics/Statistics.hpp"
+#include "Util/ZValue.hpp"
 #include "Kernels.hpp"
-
-
-
-//********************************************************************************
-int HashTable::JoinBits(int a, int b) 
-//********************************************************************************
-{
-    long int result = 0;
-    for(int ii = 8; ii >= 0; ii--)
-    {
-        result |= (a >> ii) & 1;
-        result <<= 1;
-        result |= (b >> ii) & 1;
-        if(ii != 0){
-            result <<= 1;
-        }
-    }
-    return (int)result;
-}
-
 
 //********************************************************************************
 void HashTable::setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
@@ -70,7 +51,7 @@ void HashTable::setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
     {
         for (unsigned j=0;j<gridSize_.y;j++)
         {
-            int Zindex = JoinBits(i,j);
+            int Zindex = Util::ZValue(i,j);
             gridZindex_(i,j)=Zindex;
             gridZMap_[Zindex] = glm::ivec2(i,j);
         }

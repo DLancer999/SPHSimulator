@@ -34,8 +34,6 @@ typedef std::vector< glm::ivec2 > ZMap;
 
 class HashTable
 {
-public:
-    static int JoinBits(int a, int b);
 
 private:
     Util::Matrix<std::vector<unsigned>> particlesIn_;
