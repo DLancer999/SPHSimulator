@@ -182,6 +182,16 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
             }
         }
     }
+
+    auto comp = [&cloud](const Neigbhor& i, const Neigbhor& j){
+      return cloud[i.ID].position.x < cloud[j.ID].position.x;
+    };
+    #pragma omp parallel for
+    for (unsigned i=0;i<NParticles;i++)
+    {
+      auto& nei = cloud[i].nei;
+      std::sort(nei.begin(), nei.end(), comp);
+    }
 }
 
 //********************************************************************************
