@@ -37,8 +37,8 @@ namespace Util
       constexpr size_t halfBits = nBits/2;
 
       Int result = 0;
-      size_t activeBit = 1;
-      size_t bitOffset = 0;
+      Int activeBit = 1;
+      Int bitOffset = 0;
       for(size_t ii = 0; ii < halfBits; ++ii)
       {
           result |= (y & activeBit) << bitOffset;
