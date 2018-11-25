@@ -18,6 +18,7 @@ License
 #include "SPHSolver.hpp"
 #include "Settings.hpp"
 #include "Kernels.hpp"
+#include "Reorderer.hpp"
 #include "Statistics/Statistics.hpp"
 
 //********************************************************************************
@@ -213,7 +214,7 @@ bool SPHSolver::step()
 
     if(iReorder%100==0)
     {
-        neibhs_.reorderCloud(cloud_,activeParticles_);
+        Reorderer::reorderCloud(cloud_, activeParticles_);
     }
 
     generateParticles();

@@ -14,7 +14,7 @@ Class
 Description
     Class for particle grouping
     -- Not actual hash table yet... just AABB background grid
-    -- both AABB and ZSorting implementations are memory hungry... brute force approach
+    -- AABB is memory hungry... brute force approach
 
 SourceFiles
     -
@@ -30,23 +30,17 @@ SourceFiles
 #include "Particle.hpp"
 #include "Util/Matrix.hpp"
 
-typedef std::vector< glm::ivec2 > ZMap;
-
 class HashTable
 {
 
 private:
     Util::Matrix<std::vector<unsigned>> particlesIn_;
-    Util::Matrix<int> gridZindex_;
-    ZMap   gridZMap_;
     glm::dvec2 minPos_;
     glm::uvec2 gridSize_;
 
 public:
     HashTable():
     particlesIn_(),
-    gridZindex_(),
-    gridZMap_(),
     minPos_(0.0),
     gridSize_(0,0)
     {
@@ -63,8 +57,6 @@ public:
     glm::ivec2 findGridPos(glm::dvec2 pos) const;
 
     void findNei(std::vector<Particle>& cloud, const unsigned NParticles);
-
-    void reorderCloud(std::vector<Particle>& cloud, const unsigned NParticles);
 
     //return particleList of given grid cell
     std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos);

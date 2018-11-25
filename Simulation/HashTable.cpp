@@ -31,31 +31,6 @@ void HashTable::setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
     gridSize_.y = unsigned(floor(dx.y*Kernel::SmoothingLength::dh))+2;
 
     particlesIn_.resize(gridSize_.x, gridSize_.y);
-
-    unsigned ZMapSize = std::max(gridSize_.x,gridSize_.y);
-    unsigned pow2 = 0;
-    while (ZMapSize>0)
-    {
-        ZMapSize>>=1;
-        pow2++;
-    }
-    ZMapSize=1;
-    for (unsigned i=0;i<pow2;i++) ZMapSize<<=1;
-    ZMapSize*=ZMapSize;
-
-    gridZMap_.resize(ZMapSize);
-    for (unsigned i=0;i<ZMapSize;i++) gridZMap_[i] = glm::ivec2(-1,-1);
-
-    gridZindex_.resize(gridSize_.x, gridSize_.y);
-    for (unsigned i=0;i<gridSize_.x;i++)
-    {
-        for (unsigned j=0;j<gridSize_.y;j++)
-        {
-            int Zindex = Util::ZValue(i,j);
-            gridZindex_(i,j)=Zindex;
-            gridZMap_[Zindex] = glm::ivec2(i,j);
-        }
-    }
 }
 
 //********************************************************************************
@@ -191,39 +166,6 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
     {
       auto& nei = cloud[i].nei;
       std::sort(nei.begin(), nei.end(), comp);
-    }
-}
-
-//********************************************************************************
-void HashTable::reorderCloud(std::vector<Particle>& cloud, const unsigned NParticles)
-//********************************************************************************
-{
-    static auto reorTimerID = Statistics::createTimer("HashTable::reorderTimer");
-    Statistics::TimerGuard reorderTimerGuard(reorTimerID);
-
-    std::vector<Particle> newCloud(NParticles);
-    std::vector<unsigned> oldToNewMap;
-
-    const unsigned NZcells = unsigned(gridZMap_.size());
-    for (unsigned iZ=0;iZ<NZcells;iZ++)
-    {
-        glm::ivec2 gridPos = gridZMap_[iZ];
-        if (gridPos.x<0) continue;
-        const unsigned NPartsInCell = unsigned(particlesIn_(gridPos.x,gridPos.y).size());
-        for (unsigned iPart=0;iPart<NPartsInCell;iPart++)
-        {
-            oldToNewMap.push_back(particlesIn_(gridPos.x,gridPos.y)[iPart]);
-        }
-    }
-
-    for (unsigned iPart=0;iPart<NParticles;iPart++)
-    {
-        newCloud[iPart] = cloud[oldToNewMap[iPart]];
-    }
-
-    for (unsigned iPart=0;iPart<NParticles;iPart++)
-    {
-        cloud[iPart] = newCloud[iPart];
     }
 }
 
