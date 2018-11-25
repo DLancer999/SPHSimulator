@@ -111,7 +111,7 @@ glm::ivec2 HashTable::findGridPos(glm::dvec2 pos) const
 }
 
 //********************************************************************************
-void HashTable::findNei(std::vector<Particle>& cloud)
+void HashTable::findNei(ParticleCloud& cloud)
 //********************************************************************************
 {
     static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");

@@ -22,13 +22,13 @@ SourceFiles
 #ifndef REORDERER_H
 #define REORDERER_H
 
-#include "Particle.hpp"
+#include "ParticleCloud.hpp"
 #include "Util/Matrix.hpp"
 
 class Reorderer
 {
 public:
-    static void reorderCloud(std::vector<Particle>& cloud);
+    static void reorderCloud(ParticleCloud& cloud);
 };
 
 #endif

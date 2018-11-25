@@ -20,7 +20,7 @@ License
 #include "Simulation/Settings.hpp"
 
 //********************************************************************************
-void writeRAWfile(std::string fileName, const std::vector<Particle>& cloud)
+void writeRAWfile(std::string fileName, const ParticleCloud& cloud)
 //********************************************************************************
 {
     static int writeID = 0;
@@ -137,7 +137,7 @@ void writePNG(std::string fileName, const std::vector<glm::vec3>& color)
 }
 
 //********************************************************************************
-void renderImage(std::string fileName, const std::vector<Particle>& cloud, const HashTable& neibhs)
+void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTable& neibhs)
 //********************************************************************************
 {
     static int writeID = 0;

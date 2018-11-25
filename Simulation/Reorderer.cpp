@@ -40,7 +40,7 @@ namespace
 }
 
 //********************************************************************************
-void Reorderer::reorderCloud(std::vector<Particle>& cloud)
+void Reorderer::reorderCloud(ParticleCloud& cloud)
 //********************************************************************************
 {
     static auto reorTimerID = Statistics::createTimer("Reorderer::reorderTimer");

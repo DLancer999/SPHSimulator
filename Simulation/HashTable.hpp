@@ -28,6 +28,7 @@ SourceFiles
 #include <string>
 
 #include "Particle.hpp"
+#include "ParticleCloud.hpp"
 #include "Util/Matrix.hpp"
 
 class HashTable
@@ -56,7 +57,7 @@ public:
 
     glm::ivec2 findGridPos(glm::dvec2 pos) const;
 
-    void findNei(std::vector<Particle>& cloud);
+    void findNei(ParticleCloud& cloud);
 
     //return particleList of given grid cell
     std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos);

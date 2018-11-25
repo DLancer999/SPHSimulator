@@ -24,11 +24,11 @@ SourceFiles
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "Simulation/Particle.hpp"
+#include "Simulation/ParticleCloud.hpp"
 #include "Simulation/HashTable.hpp"
 
-void writeRAWfile(std::string fileName, const std::vector<Particle>& cloud);
-void renderImage(std::string fileName, const std::vector<Particle>& cloud, const HashTable& neibhs);
+void writeRAWfile(std::string fileName, const ParticleCloud& cloud);
+void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTable& neibhs);
 void writePNG(std::string fileName, const std::vector<glm::vec3>& color);
 glm::ivec3 floatToIntColor(glm::vec3 fCol, int res);
 

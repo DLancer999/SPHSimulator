@@ -29,7 +29,7 @@ SourceFiles
 
 #include <glm/glm.hpp>
 
-#include "Simulation/Particle.hpp"
+#include "Simulation/ParticleCloud.hpp"
 #include "Shader.hpp"
 #include "Statistics/Statistics.hpp"
 
@@ -86,7 +86,7 @@ public:
 
     //basic render functions
     void init();
-    bool renderParticles(const std::vector<Particle>& cloud);
+    bool renderParticles(const ParticleCloud& cloud);
 
     //time-checks
     bool shouldRender(){renderTimer_.end();       return (renderTimer_.lapTime()>16.66e-3);}

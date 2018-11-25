@@ -216,7 +216,7 @@ void DisplayView::WindowManager::init()
 }
 
 //********************************************************************************
-bool DisplayView::WindowManager::renderParticles(const std::vector<Particle>& cloud)
+bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
 //********************************************************************************
 {
     // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions

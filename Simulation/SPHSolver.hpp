@@ -26,12 +26,13 @@ SourceFiles
 
 #include "Particle.hpp"
 #include "HashTable.hpp"
+#include "ParticleCloud.hpp"
 
 class SPHSolver
 {
 protected:
-    std::vector<Particle> cloud_;  //list of particles
-    HashTable             neibhs_; 
+    ParticleCloud cloud_;  //list of particles
+    HashTable     neibhs_; 
 
     double delta_;           //used for PCISPH
 
@@ -63,8 +64,8 @@ public:
     double calcCFL() const;
     double calcKineticEnergy() const;
 
-          std::vector<Particle>& cloud()       { return cloud_; }
-    const std::vector<Particle>& cloud() const { return cloud_; }
+          ParticleCloud& cloud()       { return cloud_; }
+    const ParticleCloud& cloud() const { return cloud_; }
           HashTable& neibhs()       {return neibhs_;}
     const HashTable& neibhs() const {return neibhs_;}
 };
