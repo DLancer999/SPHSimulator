@@ -85,8 +85,8 @@ public:
     float calcScale(glm::vec2 Fmax);
 
     //basic render functions
-    void init(std::vector<Particle>& cloud);
-    bool renderParticles(const std::vector<Particle>& cloud, const unsigned NParticles);
+    void init();
+    bool renderParticles(const std::vector<Particle>& cloud);
 
     //time-checks
     bool shouldRender(){renderTimer_.end();       return (renderTimer_.lapTime()>16.66e-3);}

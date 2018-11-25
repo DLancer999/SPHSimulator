@@ -56,7 +56,7 @@ public:
 
     glm::ivec2 findGridPos(glm::dvec2 pos) const;
 
-    void findNei(std::vector<Particle>& cloud, const unsigned NParticles);
+    void findNei(std::vector<Particle>& cloud);
 
     //return particleList of given grid cell
     std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos);

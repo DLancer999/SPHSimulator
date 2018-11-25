@@ -73,9 +73,7 @@ bool updateRender(DisplayView::WindowManager& w, SPHSolver& s, int iStep)
     // Render to screen - 60 fps max
     if (w.shouldRender()) 
     {
-        ret = windowRenderer(
-            w, s.cloud(), s.NParticles()
-        );
+        ret = windowRenderer( w, s.cloud());
     }
     
     // Rename window - once per sec
@@ -132,7 +130,7 @@ int main()
 
 #if EnableGLRender
     DisplayView::WindowManager windowManager;
-    windowManager.init(SPHsolver.cloud());
+    windowManager.init();
 
 #endif
 

@@ -22,6 +22,10 @@ License
 #include "Util/ZValue.hpp"
 #include "Kernels.hpp"
 
+#include <boost/range/adaptor/indexed.hpp>
+
+using boost::adaptors::indexed;
+
 //********************************************************************************
 void HashTable::setHashTable(const glm::dvec2& minPos, const glm::dvec2& dx)
 //********************************************************************************
@@ -107,16 +111,18 @@ glm::ivec2 HashTable::findGridPos(glm::dvec2 pos) const
 }
 
 //********************************************************************************
-void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
+void HashTable::findNei(std::vector<Particle>& cloud)
 //********************************************************************************
 {
     static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");
     Statistics::TimerGuard findNeiTimerGuard(findNeiTimerID);
 
     //find grid position of each particle
-    for (unsigned i=0;i<NParticles;i++)
+    const size_t nPart = cloud.size();
+    for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        glm::dvec2 pos = cloud[i].position;
+        Particle& part = cloud[iPart];
+        glm::dvec2 pos = part.position;
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
         while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
@@ -124,15 +130,15 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
         while (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
         while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
-        particlesIn_(gridPos.x,gridPos.y).push_back(i);
-        cloud[i].gridPos = gridPos;
+        particlesIn_(gridPos.x,gridPos.y).push_back(unsigned(iPart));
+        part.gridPos = gridPos;
     }
 
     //find nei of each particle
     #pragma omp parallel for
-    for (unsigned i=0;i<NParticles;i++)
+    for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        auto& iParticle = cloud[i];
+        Particle& iParticle = cloud[iPart];
         for (int iGrid=-1;iGrid<2;iGrid++)
         {
             for (int jGrid=-1;jGrid<2;jGrid++)
@@ -161,10 +167,11 @@ void HashTable::findNei(std::vector<Particle>& cloud, const unsigned NParticles)
     auto comp = [&cloud](const Neigbhor& i, const Neigbhor& j){
       return cloud[i.ID].position.x < cloud[j.ID].position.x;
     };
+
     #pragma omp parallel for
-    for (unsigned i=0;i<NParticles;i++)
+    for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-      auto& nei = cloud[i].nei;
+      auto& nei = cloud[iPart].nei;
       std::sort(nei.begin(), nei.end(), comp);
     }
 }

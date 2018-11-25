@@ -28,7 +28,7 @@ SourceFiles
 class Reorderer
 {
 public:
-    static void reorderCloud(std::vector<Particle>& cloud, const unsigned NParticles);
+    static void reorderCloud(std::vector<Particle>& cloud);
 };
 
 #endif
