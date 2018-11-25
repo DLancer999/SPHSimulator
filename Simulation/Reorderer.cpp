@@ -35,7 +35,7 @@ namespace
 
     RandomAccessCont tempCont(std::size(indexes));
     boost::copy(indexedValuesR, std::begin(tempCont));
-    boost::copy(tempCont, std::begin(c));
+    c = std::move(tempCont);
   }
 }
 
