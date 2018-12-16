@@ -43,7 +43,6 @@ public:
     //glm::dvec2 Fsurf;
     //glm::dvec2 Fother;
     //glm::dvec2 Ftot;
-    glm::ivec2 gridPos; //in background grid
     double mass;
     double density;
     double ddensity;    //1./density
@@ -61,7 +60,6 @@ public:
     //Fsurf(0.0),
     //Fother(0.0),
     //Ftot(0.0),
-    gridPos(0),
     mass(0.0),
     density(0.0),
     ddensity(0.0),
@@ -79,7 +77,6 @@ public:
     //Fsurf      (p.Fsurf),
     //Fother     (p.Fother),
     //Ftot       (p.Ftot),
-    gridPos    (p.gridPos),
     mass       (p.mass),
     density    (p.density),
     ddensity   (p.ddensity),
@@ -114,7 +111,6 @@ private:
     , std::vector<glm::dvec2> //Fsurf
     , std::vector<glm::dvec2> //Fother
     , std::vector<glm::dvec2> //Ftot
-    //, std::vector<glm::ivec2> //gridPos in background grid
     //, std::vector<double>     //mass
     //, std::vector<double>     //density
     //, std::vector<double>     //ddensity
@@ -186,7 +182,6 @@ public:
         get<Attr::eSurfForce  >()[i],
         get<Attr::eOtherForce >()[i],
         get<Attr::eTotalForce >()[i],
-        _cloud[i].gridPos,
         _cloud[i].mass,
         _cloud[i].density,
         _cloud[i].ddensity,

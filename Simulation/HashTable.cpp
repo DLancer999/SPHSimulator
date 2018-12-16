@@ -119,11 +119,12 @@ void HashTable::findNei(ParticleCloud& cloud)
 
     const auto& particlePos = cloud.get<Attr::ePosition>();
 
+    std::vector<glm::ivec2> particleGridPos(particlePos.size(), glm::ivec2(0));
+
     //find grid position of each particle
     const size_t nPart = cloud.size();
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        LesserParticle& part = cloud[iPart];
         glm::dvec2 pos = particlePos[iPart];
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
@@ -133,7 +134,7 @@ void HashTable::findNei(ParticleCloud& cloud)
         while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
         particlesIn_(gridPos.x,gridPos.y).push_back(unsigned(iPart));
-        part.gridPos = gridPos;
+        particleGridPos[iPart] = gridPos;
     }
 
     //find nei of each particle
@@ -141,12 +142,13 @@ void HashTable::findNei(ParticleCloud& cloud)
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
         const glm::dvec2 iPos = particlePos[iPart];
+        const glm::ivec2 iGridPos = particleGridPos[iPart];
         LesserParticle& iParticle = cloud[iPart];
         for (int iGrid=-1;iGrid<2;iGrid++)
         {
             for (int jGrid=-1;jGrid<2;jGrid++)
             {
-                glm::ivec2 gridPos = iParticle.gridPos + glm::ivec2(iGrid,jGrid);
+                glm::ivec2 gridPos = iGridPos + glm::ivec2(iGrid,jGrid);
 
                 if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
                 else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }

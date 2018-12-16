@@ -57,7 +57,6 @@ public:
     glm::dvec2 Fsurf    = glm::dvec2(0.0);
     glm::dvec2 Fother   = glm::dvec2(0.0);
     glm::dvec2 Ftot     = glm::dvec2(0.0);
-    glm::ivec2 gridPos  = glm::ivec2(0);
     double mass       = 0.0;
     double density    = 0.0;
     double ddensity   = 0.0;
