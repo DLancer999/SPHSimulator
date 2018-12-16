@@ -452,6 +452,8 @@ void SPHSolver::calcNormal()
     static auto normalCalcTimerID   = Statistics::createTimer("SPHSolver::normalCalcTimer");
     Statistics::TimerGuard normalGuard(normalCalcTimerID);
 
+    auto& particleNormal = cloud_.get<Attr::eNormal>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -470,7 +472,7 @@ void SPHSolver::calcNormal()
                   *Kernel::poly6::gradW(iParticle.nei[i].dir,iParticle.nei[i].dist);
         }
         norm *= Kernel::poly6::gradW_coeff()*Kernel::SmoothingLength::h;
-        iParticle.normal = norm;
+        particleNormal[iPart] = norm;
     }
 }
 
@@ -672,6 +674,8 @@ void SPHSolver::calcSurfForces()
     static auto surfForceTimerID  = Statistics::createTimer("SPHSolver::surfForceTimer");
     Statistics::TimerGuard surfForceGuard(surfForceTimerID);
 
+    const auto& particleNormal = cloud_.get<Attr::eNormal>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -681,6 +685,7 @@ void SPHSolver::calcSurfForces()
         double correction = 0.0;
 
         LesserParticle& iParticle = cloud_[iPart];
+        const glm::dvec2 iNorm = particleNormal[iPart];
 
         const unsigned Nnei = unsigned(iParticle.nei.size());
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
@@ -701,7 +706,7 @@ void SPHSolver::calcSurfForces()
 
             Fcurvature+= correction
                    *iParticle.mass
-                   *(iParticle.normal - jParticle.normal);
+                   *(iNorm - particleNormal[jPart]);
         }
 
         Fcohesion *= Kernel::surface::C_coeff();

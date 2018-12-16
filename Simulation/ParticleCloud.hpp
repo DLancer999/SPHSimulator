@@ -28,7 +28,7 @@ class LesserParticle
 public:
     //glm::dvec2 position;
     //glm::dvec2 velocity;
-    glm::dvec2 normal;
+    //glm::dvec2 normal;
     glm::dvec2 Fpress;
     glm::dvec2 Fvisc;
     glm::dvec2 Fsurf;
@@ -46,7 +46,7 @@ public:
     LesserParticle():
     //position(-100.0),
     //velocity(0.0),
-    normal(0.0),
+    //normal(0.0),
     Fpress(0.0),
     Fvisc(0.0),
     Fsurf(0.0),
@@ -64,7 +64,7 @@ public:
     LesserParticle(const Particle& p):
     //position   (p.position),
     //velocity   (p.velocity),
-    normal     (p.normal),
+    //normal     (p.normal),
     Fpress     (p.Fpress),
     Fvisc      (p.Fvisc),
     Fsurf      (p.Fsurf),
@@ -84,6 +84,7 @@ public:
 enum class Attr : size_t {
   ePosition = 0,
   eVelocity,
+  eNormal,
   nAttr
 };
 
@@ -128,12 +129,14 @@ public:
       _cloud.reserve(s);
       get<Attr::ePosition>().reserve(s);
       get<Attr::eVelocity>().reserve(s);
+      get<Attr::eNormal>().reserve(s);
     }
 
     void push_back(const Particle& p) {
       _cloud.push_back(LesserParticle{p});
       get<Attr::ePosition>().push_back(p.position);
       get<Attr::eVelocity>().push_back(p.velocity);
+      get<Attr::eNormal>().push_back(p.normal);
     }
 
     //void push_back(const LesserParticle& p) {
@@ -145,7 +148,7 @@ public:
       return Particle {
         get<Attr::ePosition>()[i],
         get<Attr::eVelocity>()[i],
-        _cloud[i].normal,
+        get<Attr::eNormal>()[i],
         _cloud[i].Fpress,
         _cloud[i].Fvisc,
         _cloud[i].Fsurf,
@@ -173,7 +176,7 @@ private:
     std::tuple<
       std::vector<glm::dvec2> //position
     , std::vector<glm::dvec2> //velocity
-    //, std::vector<glm::dvec2> //normal
+    , std::vector<glm::dvec2> //normal
     //, std::vector<glm::dvec2> //Fpress
     //, std::vector<glm::dvec2> //Fvisc
     //, std::vector<glm::dvec2> //Fsurf
