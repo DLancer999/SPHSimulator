@@ -21,6 +21,15 @@ Class
 
 #include "Particle.hpp"
 
+namespace detail {
+  template<class Tuple, class Functor, std::size_t... Is>
+  void applyOnTuple(Tuple& t, const Functor& f, std::index_sequence<Is...>)
+  {
+    (f(std::get<Is>(t)),...);
+  }
+}
+
+
 //this is an itermediate class used to migrate from old system to new.
 //once the migration is done this should be deleted.
 class LesserParticle
@@ -91,6 +100,25 @@ enum class Attr : size_t {
 
 class ParticleCloud
 {
+private:
+    using DataType = std::tuple<
+      std::vector<glm::dvec2> //position
+    , std::vector<glm::dvec2> //velocity
+    , std::vector<glm::dvec2> //normal
+    , std::vector<glm::dvec2> //Fpress
+    //, std::vector<glm::dvec2> //Fvisc
+    //, std::vector<glm::dvec2> //Fsurf
+    //, std::vector<glm::dvec2> //Fother
+    //, std::vector<glm::dvec2> //Ftot
+    //, std::vector<glm::ivec2> //gridPos in background grid
+    //, std::vector<double>     //mass
+    //, std::vector<double>     //density
+    //, std::vector<double>     //ddensity
+    //, std::vector<double>     //densityErr
+    //, std::vector<double>     //pressure
+    //, std::vector<std::vector<Neigbhor>> // list of neighbours
+    >;
+    static constexpr size_t nAttributes = std::tuple_size<DataType>::value;
 public:
 
     using ParticleVector = std::vector<LesserParticle>;
@@ -127,11 +155,8 @@ public:
     decltype(auto) get() const { return std::get<static_cast<size_t>(attr)>(_data); }
 
     void reserve(size_t s) {
-      _cloud.reserve(s);
-      get<Attr::ePosition>().reserve(s);
-      get<Attr::eVelocity>().reserve(s);
-      get<Attr::eNormal>().reserve(s);
-      get<Attr::ePressForce>().reserve(s);
+      auto reserveFunctor = [s](auto& v){ v.reserve(s); };
+      applyFunctor(reserveFunctor);
     }
 
     void push_back(const Particle& p) {
@@ -141,17 +166,13 @@ public:
       get<Attr::eNormal>().push_back(p.normal);
       get<Attr::ePressForce>().push_back(p.Fpress);
     }
-
-    //void push_back(const LesserParticle& p) {
-    //  _cloud.push_back(p);
-    //}
     
     Particle particle(size_t i) const
     {
       return Particle {
-        get<Attr::ePosition>()[i],
-        get<Attr::eVelocity>()[i],
-        get<Attr::eNormal>()[i],
+        get<Attr::ePosition  >()[i],
+        get<Attr::eVelocity  >()[i],
+        get<Attr::eNormal    >()[i],
         get<Attr::ePressForce>()[i],
         _cloud[i].Fvisc,
         _cloud[i].Fsurf,
@@ -174,25 +195,20 @@ public:
     ParticleVector& getCloud() { return _cloud; }
     const ParticleVector& getCloud() const { return _cloud; }
 
+    template <class Functor>
+    void applyFunctor(const Functor& f) {
+      f(_cloud);
+      detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
+    }
+    template <class Functor>
+    void applyFunctor(const Functor& f) const {
+      f(_cloud);
+      detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
+    }
+
 private:
     ParticleVector _cloud;
-    std::tuple<
-      std::vector<glm::dvec2> //position
-    , std::vector<glm::dvec2> //velocity
-    , std::vector<glm::dvec2> //normal
-    , std::vector<glm::dvec2> //Fpress
-    //, std::vector<glm::dvec2> //Fvisc
-    //, std::vector<glm::dvec2> //Fsurf
-    //, std::vector<glm::dvec2> //Fother
-    //, std::vector<glm::dvec2> //Ftot
-    //, std::vector<glm::ivec2> //gridPos in background grid
-    //, std::vector<double>     //mass
-    //, std::vector<double>     //density
-    //, std::vector<double>     //ddensity
-    //, std::vector<double>     //densityErr
-    //, std::vector<double>     //pressure
-    //, std::vector<std::vector<Neigbhor>> // list of neighbours
-    > _data;
+    DataType _data; 
 };
 
 #endif

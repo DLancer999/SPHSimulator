@@ -76,11 +76,8 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
       return zVal[i]<zVal[j];
     });
 
-    ::indexedReordering(cloud.getCloud(), indexes);
-    ::indexedReordering(cloud.get<Attr::ePosition>(), indexes);
-    ::indexedReordering(cloud.get<Attr::eVelocity>(), indexes);
-    ::indexedReordering(cloud.get<Attr::eNormal>(), indexes);
-    ::indexedReordering(cloud.get<Attr::ePressForce>(), indexes);
+    auto indexedReordered = [&indexes](auto& v){ ::indexedReordering(v, indexes); };
+    cloud.applyFunctor(indexedReordered);
 }
 
 
