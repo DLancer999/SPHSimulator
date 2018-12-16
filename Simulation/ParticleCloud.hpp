@@ -42,7 +42,7 @@ public:
     //glm::dvec2 Fvisc;
     //glm::dvec2 Fsurf;
     //glm::dvec2 Fother;
-    glm::dvec2 Ftot;
+    //glm::dvec2 Ftot;
     glm::ivec2 gridPos; //in background grid
     double mass;
     double density;
@@ -60,7 +60,7 @@ public:
     //Fvisc(0.0),
     //Fsurf(0.0),
     //Fother(0.0),
-    Ftot(0.0),
+    //Ftot(0.0),
     gridPos(0),
     mass(0.0),
     density(0.0),
@@ -78,7 +78,7 @@ public:
     //Fvisc      (p.Fvisc),
     //Fsurf      (p.Fsurf),
     //Fother     (p.Fother),
-    Ftot       (p.Ftot),
+    //Ftot       (p.Ftot),
     gridPos    (p.gridPos),
     mass       (p.mass),
     density    (p.density),
@@ -98,6 +98,7 @@ enum class Attr : size_t {
   eViscForce,
   eSurfForce,
   eOtherForce,
+  eTotalForce,
   nAttr
 };
 
@@ -112,7 +113,7 @@ private:
     , std::vector<glm::dvec2> //Fvisc
     , std::vector<glm::dvec2> //Fsurf
     , std::vector<glm::dvec2> //Fother
-    //, std::vector<glm::dvec2> //Ftot
+    , std::vector<glm::dvec2> //Ftot
     //, std::vector<glm::ivec2> //gridPos in background grid
     //, std::vector<double>     //mass
     //, std::vector<double>     //density
@@ -170,20 +171,21 @@ public:
       get<Attr::ePressForce>().push_back(p.Fpress);
       get<Attr::eViscForce>().push_back(p.Fvisc);
       get<Attr::eSurfForce>().push_back(p.Fvisc);
-      get<Attr::eOtherForce>().push_back(p.Fvisc);
+      get<Attr::eOtherForce>().push_back(p.Fother);
+      get<Attr::eTotalForce>().push_back(p.Ftot);
     }
     
     Particle particle(size_t i) const
     {
       return Particle {
-        get<Attr::ePosition  >()[i],
-        get<Attr::eVelocity  >()[i],
-        get<Attr::eNormal    >()[i],
-        get<Attr::ePressForce>()[i],
-        get<Attr::eViscForce >()[i],
-        get<Attr::eSurfForce >()[i],
+        get<Attr::ePosition   >()[i],
+        get<Attr::eVelocity   >()[i],
+        get<Attr::eNormal     >()[i],
+        get<Attr::ePressForce >()[i],
+        get<Attr::eViscForce  >()[i],
+        get<Attr::eSurfForce  >()[i],
         get<Attr::eOtherForce >()[i],
-        _cloud[i].Ftot,
+        get<Attr::eTotalForce >()[i],
         _cloud[i].gridPos,
         _cloud[i].mass,
         _cloud[i].density,

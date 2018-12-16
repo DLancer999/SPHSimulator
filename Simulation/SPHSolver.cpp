@@ -124,16 +124,18 @@ void SPHSolver::WCSPHStep()
         const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
         const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
 
+        auto& particleFTotal = cloud_.get<Attr::eTotalForce>();
+
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
-            cloud_[iPart].Ftot = particleFPress[iPart]
-                               + particleFVisc [iPart]
-                               + particleFSurf [iPart]
-                               + particleFOther[iPart];
+            particleFTotal[iPart] = particleFPress[iPart]
+                                  + particleFVisc [iPart]
+                                  + particleFSurf [iPart]
+                                  + particleFOther[iPart];
 
-            particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
+            particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*particleFTotal[iPart];
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
@@ -161,16 +163,18 @@ void SPHSolver::PCISPHStep()
         const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
         const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
 
+        auto& particleFTotal = cloud_.get<Attr::eTotalForce>();
+
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
             LesserParticle& particle = cloud_[iPart];
-            particle.Ftot = particleFVisc [iPart]
-                          + particleFSurf [iPart]
-                          + particleFOther[iPart];
+            particleFTotal[iPart] = particleFVisc [iPart]
+                                  + particleFSurf [iPart]
+                                  + particleFOther[iPart];
 
-            particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particle.Ftot;
+            particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particleFTotal[iPart];
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
@@ -206,13 +210,14 @@ void SPHSolver::PCISPHStep()
 
             auto& particlePos = cloud_.get<Attr::ePosition>();
             auto& particleVel = cloud_.get<Attr::eVelocity>();
+            auto& particleFTot = cloud_.get<Attr::eTotalForce>();
             const auto& particleFPress = cloud_.get<Attr::ePressForce>();
 
             for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
             {
                 const glm::dvec2 iPress = particleFPress[iPart];
                 LesserParticle& iParticle = cloud_[iPart];
-                iParticle.Ftot+= iPress;
+                particleFTot[iPart] += iPress;
 
                 glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iPress;
                 particleVel[iPart] += update;

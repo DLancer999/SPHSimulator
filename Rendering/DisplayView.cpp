@@ -338,10 +338,11 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
 
         else if (RenderSettings::displayRender==RenderSettings::ALLFORCES)
         {
+            const auto& particleTotalForce = cloud.get<Attr::eTotalForce>();
             #pragma omp parallel for
             for (size_t iPart = 0;iPart<NParticles;iPart++) 
             {
-                sForce_[iPart] = cloud[iPart].Ftot;
+                sForce_[iPart] = particleTotalForce[iPart];
             }
 
             glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
