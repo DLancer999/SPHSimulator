@@ -39,7 +39,7 @@ public:
     //glm::dvec2 velocity;
     //glm::dvec2 normal;
     //glm::dvec2 Fpress;
-    glm::dvec2 Fvisc;
+    //glm::dvec2 Fvisc;
     glm::dvec2 Fsurf;
     glm::dvec2 Fother;
     glm::dvec2 Ftot;
@@ -57,7 +57,7 @@ public:
     //velocity(0.0),
     //normal(0.0),
     //Fpress(0.0),
-    Fvisc(0.0),
+    //Fvisc(0.0),
     Fsurf(0.0),
     Fother(0.0),
     Ftot(0.0),
@@ -75,7 +75,7 @@ public:
     //velocity   (p.velocity),
     //normal     (p.normal),
     //Fpress     (p.Fpress),
-    Fvisc      (p.Fvisc),
+    //Fvisc      (p.Fvisc),
     Fsurf      (p.Fsurf),
     Fother     (p.Fother),
     Ftot       (p.Ftot),
@@ -95,6 +95,7 @@ enum class Attr : size_t {
   eVelocity,
   eNormal,
   ePressForce,
+  eViscForce,
   nAttr
 };
 
@@ -106,7 +107,7 @@ private:
     , std::vector<glm::dvec2> //velocity
     , std::vector<glm::dvec2> //normal
     , std::vector<glm::dvec2> //Fpress
-    //, std::vector<glm::dvec2> //Fvisc
+    , std::vector<glm::dvec2> //Fvisc
     //, std::vector<glm::dvec2> //Fsurf
     //, std::vector<glm::dvec2> //Fother
     //, std::vector<glm::dvec2> //Ftot
@@ -165,6 +166,7 @@ public:
       get<Attr::eVelocity>().push_back(p.velocity);
       get<Attr::eNormal>().push_back(p.normal);
       get<Attr::ePressForce>().push_back(p.Fpress);
+      get<Attr::eViscForce>().push_back(p.Fvisc);
     }
     
     Particle particle(size_t i) const
@@ -174,7 +176,7 @@ public:
         get<Attr::eVelocity  >()[i],
         get<Attr::eNormal    >()[i],
         get<Attr::ePressForce>()[i],
-        _cloud[i].Fvisc,
+        get<Attr::eViscForce >()[i],
         _cloud[i].Fsurf,
         _cloud[i].Fother,
         _cloud[i].Ftot,

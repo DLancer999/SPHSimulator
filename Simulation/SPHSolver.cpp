@@ -120,13 +120,14 @@ void SPHSolver::WCSPHStep()
         auto& particlePos = cloud_.get<Attr::ePosition>();
         auto& particleVel = cloud_.get<Attr::eVelocity>();
         const auto& particleFPress = cloud_.get<Attr::ePressForce>();
+        const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
             cloud_[iPart].Ftot = particleFPress[iPart]
-                               + cloud_[iPart].Fvisc
+                               + particleFVisc [iPart]
                                + cloud_[iPart].Fsurf
                                + cloud_[iPart].Fother;
 
@@ -154,13 +155,16 @@ void SPHSolver::PCISPHStep()
 
         auto& particlePos = cloud_.get<Attr::ePosition>();
         auto& particleVel = cloud_.get<Attr::eVelocity>();
+        const auto& particleFVisc  = cloud_.get<Attr::eViscForce>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
             LesserParticle& particle = cloud_[iPart];
-            particle.Ftot = particle.Fvisc+particle.Fsurf+particle.Fother;
+            particle.Ftot = particleFVisc[iPart]
+                          + particle.Fsurf
+                          + particle.Fother;
 
             particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particle.Ftot;
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
@@ -643,6 +647,7 @@ void SPHSolver::calcViscForces()
     Statistics::TimerGuard viscForceGuard(viscForceTimerID);
 
     const auto& particleVel = cloud_.get<Attr::eVelocity>();
+    auto& particleFVisc = cloud_.get<Attr::eViscForce>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
@@ -670,7 +675,7 @@ void SPHSolver::calcViscForces()
         }
         Fv*=SPHSettings::viscosity*Kernel::visc::laplW_coeff();
 
-        iParticle.Fvisc= Fv;
+        particleFVisc[iPart] = Fv;
     }
 }
 

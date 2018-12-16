@@ -293,21 +293,22 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
 
         if (RenderSettings::displayRender==RenderSettings::PRESSFORCES)
         {
-            const auto& particlePress = cloud.get<Attr::ePressForce>();
+            const auto& particlePressForce = cloud.get<Attr::ePressForce>();
             #pragma omp parallel for
             for (size_t iPart = 0;iPart<NParticles;iPart++) 
             {
-                sForce_[iPart] = particlePress[iPart];
+                sForce_[iPart] = particlePressForce[iPart];
             }
 
             glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::VISCFORCES)
         {
+            const auto& particleViscForce = cloud.get<Attr::eViscForce>();
             #pragma omp parallel for
             for (size_t iPart = 0;iPart<NParticles;iPart++) 
             {
-                sForce_[iPart] = cloud[iPart].Fvisc;
+                sForce_[iPart] = particleViscForce[iPart];
             }
 
             glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
