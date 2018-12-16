@@ -17,6 +17,7 @@ Class
 #define PARTICLECLOUD_H
 
 #include <vector>
+#include <tuple>
 
 #include "Particle.hpp"
 
@@ -25,7 +26,7 @@ Class
 class LesserParticle
 {
 public:
-    glm::dvec2 position;
+    //glm::dvec2 position;
     glm::dvec2 velocity;
     glm::dvec2 normal;
     glm::dvec2 Fpress;
@@ -43,7 +44,7 @@ public:
 
 public:
     LesserParticle():
-    position(-100.0),
+    //position(-100.0),
     velocity(0.0),
     normal(0.0),
     Fpress(0.0),
@@ -61,7 +62,7 @@ public:
     {}
 
     LesserParticle(const Particle& p):
-    position   (p.position),
+    //position   (p.position),
     velocity   (p.velocity),
     normal     (p.normal),
     Fpress     (p.Fpress),
@@ -79,10 +80,16 @@ public:
     {}
 };
 
+//order must be in aggrement with data tuple
+enum class Attr : size_t {
+  ePosition = 0,
+  nAttr
+};
 
 class ParticleCloud
 {
 public:
+
     using ParticleVector = std::vector<LesserParticle>;
     using iterator = ParticleVector::iterator;
     using const_iterator = ParticleVector::const_iterator;
@@ -99,11 +106,9 @@ public:
           LesserParticle& back()       { return _cloud.back(); }
     const LesserParticle& back() const { return _cloud.back(); }
 
-    ParticleCloud(): _cloud() {}
+    ParticleCloud(): _cloud(), _data() {}
     ParticleCloud(const ParticleCloud&) = default;
     ParticleCloud(ParticleCloud&&)      = default;
-
-    ParticleCloud(size_t s): _cloud(s) {}
 
     ~ParticleCloud() = default;
 
@@ -113,22 +118,58 @@ public:
     LesserParticle& operator[](size_t i) { return _cloud[i]; }
     const LesserParticle& operator[](size_t i) const { return _cloud[i]; }
 
-    void reserve(size_t s) { _cloud.reserve(s); }
+    template <Attr attr>
+    decltype(auto) get() { return std::get<static_cast<size_t>(attr)>(_data); }
+    template <Attr attr>
+    decltype(auto) get() const { return std::get<static_cast<size_t>(attr)>(_data); }
+
+    void reserve(size_t s) {
+      _cloud.reserve(s);
+      get<Attr::ePosition>().reserve(s);
+    }
 
     void push_back(const Particle& p) {
       _cloud.push_back(LesserParticle{p});
+      get<Attr::ePosition>().push_back(p.position);
     }
 
-    void push_back(const LesserParticle& p) {
-      _cloud.push_back(p);
+    //void push_back(const LesserParticle& p) {
+    //  _cloud.push_back(p);
+    //}
+    
+    Particle particle(size_t i) const
+    {
+      return Particle {
+        get<Attr::ePosition>()[i],
+        _cloud[i].velocity,
+        _cloud[i].normal,
+        _cloud[i].Fpress,
+        _cloud[i].Fvisc,
+        _cloud[i].Fsurf,
+        _cloud[i].Fother,
+        _cloud[i].Ftot,
+        _cloud[i].gridPos,
+        _cloud[i].mass,
+        _cloud[i].density,
+        _cloud[i].ddensity,
+        _cloud[i].densityErr,
+        _cloud[i].pressure,
+        _cloud[i].nei
+      };
     }
 
     size_t size() const { return _cloud.size(); }
 
     bool empty() const { return _cloud.empty(); }
 
+    ParticleVector& getCloud() { return _cloud; }
+    const ParticleVector& getCloud() const { return _cloud; }
+
 private:
     ParticleVector _cloud;
+    std::tuple<
+      std::vector<glm::dvec2> //position
+    > _data;
 };
 
 #endif

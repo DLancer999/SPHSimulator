@@ -225,12 +225,14 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
     // Clear the colorbuffer
     glClear( GL_COLOR_BUFFER_BIT );
     
+    const auto& particlePos = cloud.get<Attr::ePosition>();
+
     //update screen positions
     const size_t NParticles = cloud.size();
     #pragma omp parallel for
     for (size_t iPart = 0;iPart<NParticles;iPart++) 
     {
-        sPosition_[iPart] = cloud[iPart].position;
+        sPosition_[iPart] = particlePos[iPart];
 
         if (RenderSettings::displayRender==RenderSettings::INDEX)
         {

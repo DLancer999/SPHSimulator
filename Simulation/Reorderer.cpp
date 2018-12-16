@@ -50,9 +50,10 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
     //if (cloud.empty())
     //  return;
 
-    auto getPos = [](const LesserParticle& p){ return p.position; };
+    const auto& particlePos = cloud.get<Attr::ePosition>();
+
     glm::dvec2 minPos = glm::dvec2(std::numeric_limits<double>::max());
-    for (const auto& iPos : cloud | transformed(getPos) ) {
+    for (const auto& iPos : particlePos ) {
       if (minPos.x > iPos.x)
         minPos.x = iPos.x;
       if (minPos.y > iPos.y)
@@ -64,7 +65,7 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
       return Util::ZValue(gridIndex.x, gridIndex.y);
     };
 
-    auto zValR = cloud | transformed(getPos) | transformed(calcZIndex);
+    auto zValR = particlePos | transformed(calcZIndex);
 
     std::vector<unsigned> zVal(zValR.begin(), zValR.end());
 
@@ -75,7 +76,8 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
       return zVal[i]<zVal[j];
     });
 
-    ::indexedReordering(cloud, indexes);
+    ::indexedReordering(cloud.getCloud(), indexes);
+    ::indexedReordering(cloud.get<Attr::ePosition>(), indexes);
 }
 
 

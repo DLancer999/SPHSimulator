@@ -117,12 +117,14 @@ void HashTable::findNei(ParticleCloud& cloud)
     static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");
     Statistics::TimerGuard findNeiTimerGuard(findNeiTimerID);
 
+    const auto& particlePos = cloud.get<Attr::ePosition>();
+
     //find grid position of each particle
     const size_t nPart = cloud.size();
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
         LesserParticle& part = cloud[iPart];
-        glm::dvec2 pos = part.position;
+        glm::dvec2 pos = particlePos[iPart];
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
         while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
@@ -138,6 +140,7 @@ void HashTable::findNei(ParticleCloud& cloud)
     #pragma omp parallel for
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
+        const glm::dvec2 iPos = particlePos[iPart];
         LesserParticle& iParticle = cloud[iPart];
         for (int iGrid=-1;iGrid<2;iGrid++)
         {
@@ -154,7 +157,7 @@ void HashTable::findNei(ParticleCloud& cloud)
                 for (size_t iNei=0;iNei<nNei;iNei++)
                 {
                     const unsigned neiPos = particlesIn_(gridPos.x,gridPos.y)[iNei];
-                    const double dist2 = glm::length2(iParticle.position - cloud[neiPos].position);
+                    const double dist2 = glm::length2(iPos - particlePos[neiPos]);
                     if (dist2 < Kernel::SmoothingLength::h2)
                     {
                         iParticle.nei.push_back(Neigbhor(neiPos));
@@ -164,8 +167,8 @@ void HashTable::findNei(ParticleCloud& cloud)
         }
     }
 
-    auto comp = [&cloud](const Neigbhor& i, const Neigbhor& j){
-      return cloud[i.ID].position.x < cloud[j.ID].position.x;
+    auto comp = [&particlePos](const Neigbhor& i, const Neigbhor& j){
+      return particlePos[i.ID].x < particlePos[j.ID].x;
     };
 
     #pragma omp parallel for

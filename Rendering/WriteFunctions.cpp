@@ -39,7 +39,7 @@ void writeRAWfile(std::string fileName, const ParticleCloud& cloud)
     const unsigned NParticles = unsigned(cloud.size());
     for (unsigned i=0;i<NParticles;i++)
     {
-        const LesserParticle& iParticle = cloud[i];
+        Particle iParticle = cloud.particle(i);
         outfile<<std::scientific;
         outfile<<i<<"\t"                    
                <<iParticle.position.x<<"\t" 
@@ -162,6 +162,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
     //metaball apprach
     if (RenderSettings::fileRender==RenderSettings::METABALL)
     {
+        const auto& particlePos = cloud.get<Attr::ePosition>();
         for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
@@ -182,8 +183,9 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
+                            const unsigned nei = neiParts[neiPart];
                             const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
-                            double dist = glm::length(pos-neiParticle.position);
+                            double dist = glm::length(pos-particlePos[nei]);
                             if (dist>1.e-10) 
                             {
                                 double potCon = 1./(dist*dist);
@@ -214,6 +216,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
     //point shader approach
     else if (RenderSettings::fileRender==RenderSettings::DISCRETE)
     {
+        const auto& particlePos = cloud.get<Attr::ePosition>();
         for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
@@ -234,8 +237,9 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
+                            const unsigned nei = neiParts[neiPart];
                             const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
-                            double dist = glm::length(pos-neiParticle.position);
+                            double dist = glm::length(pos-particlePos[nei]);
                             if (dist<SPHSettings::initDx*0.4) inFluid=true;
                             if (inFluid) 
                             {

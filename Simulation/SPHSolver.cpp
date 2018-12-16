@@ -115,6 +115,8 @@ void SPHSolver::WCSPHStep()
         static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::WCSPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
 
+        auto& particlePos = cloud_.get<Attr::ePosition>();
+
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -125,7 +127,7 @@ void SPHSolver::WCSPHStep()
                                + cloud_[iPart].Fother;
 
             cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
-            cloud_[iPart].position += SimulationSettings::dt*cloud_[iPart].velocity;
+            particlePos[iPart]     += SimulationSettings::dt*cloud_[iPart].velocity;
         }
     }
 }
@@ -146,6 +148,8 @@ void SPHSolver::PCISPHStep()
         static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::PCISPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
 
+        auto& particlePos = cloud_.get<Attr::ePosition>();
+
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -153,8 +157,8 @@ void SPHSolver::PCISPHStep()
             LesserParticle& particle = cloud_[iPart];
             particle.Ftot = particle.Fvisc+particle.Fsurf+particle.Fother;
 
-            particle.velocity += SimulationSettings::dt*particle.ddensity*particle.Ftot;
-            particle.position += SimulationSettings::dt*particle.velocity;
+            particle.velocity  += SimulationSettings::dt*particle.ddensity*particle.Ftot;
+            particlePos[iPart] += SimulationSettings::dt*particle.velocity;
         }
     }
 
@@ -186,6 +190,8 @@ void SPHSolver::PCISPHStep()
             iter++;
 
             calcPressForces();
+
+            auto& particlePos = cloud_.get<Attr::ePosition>();
             for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
             {
                 LesserParticle& iParticle = cloud_[iPart];
@@ -193,7 +199,7 @@ void SPHSolver::PCISPHStep()
 
                 glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
                 iParticle.velocity += update;
-                iParticle.position += SimulationSettings::dt*update;
+                particlePos[iPart] += SimulationSettings::dt*update;
             }
         }
     }
@@ -338,6 +344,8 @@ void SPHSolver::updateNei()
     static auto updateNeiTimerID = Statistics::createTimer("SPHSolver::updateNeiTime");
     Statistics::TimerGuard updateNeiTimerGuard(updateNeiTimerID);
 
+    const auto& particlePos = cloud_.get<Attr::ePosition>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -350,9 +358,7 @@ void SPHSolver::updateNei()
             Neigbhor& iPartNeiI = iParticle.nei[i];
             if (iPart!=jPart)
             {
-                LesserParticle& jParticle = cloud_[jPart];
-
-                iPartNeiI.dir  = iParticle.position-jParticle.position;
+                iPartNeiI.dir  = particlePos[iPart]-particlePos[jPart];
                 iPartNeiI.dist = glm::length(iPartNeiI.dir);
             }
         }
@@ -489,6 +495,8 @@ void SPHSolver::calcOtherForces()
     static auto otherForceTimerID = Statistics::createTimer("SPHSolver::otherForceTimer");
     Statistics::TimerGuard otherForceGuard(otherForceTimerID);
 
+    const auto& particlePos = cloud_.get<Attr::ePosition>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -498,7 +506,7 @@ void SPHSolver::calcOtherForces()
         particle.Fother = SPHSettings::grav;
 
         //boundary forces
-        glm::dvec2 iPos = particle.position;
+        glm::dvec2 iPos = particlePos[iPart];
         glm::dvec2 bndPos(0.0,0.0);
         glm::dvec2 tmpiPos(0.0,0.0);
         double W0 = Kernel::poly6::W(0.0)*Kernel::poly6::W_coeff();
