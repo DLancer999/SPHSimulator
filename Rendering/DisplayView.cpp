@@ -315,10 +315,11 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
         }
         else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
         {
+            const auto& particleSurfForce = cloud.get<Attr::eSurfForce>();
             #pragma omp parallel for
             for (size_t iPart = 0;iPart<NParticles;iPart++) 
             {
-                sForce_[iPart] = cloud[iPart].Fsurf;
+                sForce_[iPart] = particleSurfForce[iPart];
             }
 
             glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);

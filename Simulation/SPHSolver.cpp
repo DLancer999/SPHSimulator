@@ -121,6 +121,7 @@ void SPHSolver::WCSPHStep()
         auto& particleVel = cloud_.get<Attr::eVelocity>();
         const auto& particleFPress = cloud_.get<Attr::ePressForce>();
         const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
+        const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
@@ -128,7 +129,7 @@ void SPHSolver::WCSPHStep()
         {
             cloud_[iPart].Ftot = particleFPress[iPart]
                                + particleFVisc [iPart]
-                               + cloud_[iPart].Fsurf
+                               + particleFSurf [iPart]
                                + cloud_[iPart].Fother;
 
             particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
@@ -156,6 +157,7 @@ void SPHSolver::PCISPHStep()
         auto& particlePos = cloud_.get<Attr::ePosition>();
         auto& particleVel = cloud_.get<Attr::eVelocity>();
         const auto& particleFVisc  = cloud_.get<Attr::eViscForce>();
+        const auto& particleFSurf  = cloud_.get<Attr::eSurfForce>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
@@ -163,7 +165,7 @@ void SPHSolver::PCISPHStep()
         {
             LesserParticle& particle = cloud_[iPart];
             particle.Ftot = particleFVisc[iPart]
-                          + particle.Fsurf
+                          + particleFSurf[iPart]
                           + particle.Fother;
 
             particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particle.Ftot;
@@ -687,6 +689,7 @@ void SPHSolver::calcSurfForces()
     Statistics::TimerGuard surfForceGuard(surfForceTimerID);
 
     const auto& particleNormal = cloud_.get<Attr::eNormal>();
+    auto& particleFSurf = cloud_.get<Attr::eSurfForce>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
@@ -723,9 +726,9 @@ void SPHSolver::calcSurfForces()
 
         Fcohesion *= Kernel::surface::C_coeff();
 
-        iParticle.Fsurf = -SPHSettings::surfTension
-                          * iParticle.density
-                          * (Fcohesion+Fcurvature);
+        particleFSurf[iPart] = -SPHSettings::surfTension
+                             * iParticle.density
+                             * (Fcohesion+Fcurvature);
     }
 }
 

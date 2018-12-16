@@ -40,7 +40,7 @@ public:
     //glm::dvec2 normal;
     //glm::dvec2 Fpress;
     //glm::dvec2 Fvisc;
-    glm::dvec2 Fsurf;
+    //glm::dvec2 Fsurf;
     glm::dvec2 Fother;
     glm::dvec2 Ftot;
     glm::ivec2 gridPos; //in background grid
@@ -58,7 +58,7 @@ public:
     //normal(0.0),
     //Fpress(0.0),
     //Fvisc(0.0),
-    Fsurf(0.0),
+    //Fsurf(0.0),
     Fother(0.0),
     Ftot(0.0),
     gridPos(0),
@@ -76,7 +76,7 @@ public:
     //normal     (p.normal),
     //Fpress     (p.Fpress),
     //Fvisc      (p.Fvisc),
-    Fsurf      (p.Fsurf),
+    //Fsurf      (p.Fsurf),
     Fother     (p.Fother),
     Ftot       (p.Ftot),
     gridPos    (p.gridPos),
@@ -96,6 +96,7 @@ enum class Attr : size_t {
   eNormal,
   ePressForce,
   eViscForce,
+  eSurfForce,
   nAttr
 };
 
@@ -108,7 +109,7 @@ private:
     , std::vector<glm::dvec2> //normal
     , std::vector<glm::dvec2> //Fpress
     , std::vector<glm::dvec2> //Fvisc
-    //, std::vector<glm::dvec2> //Fsurf
+    , std::vector<glm::dvec2> //Fsurf
     //, std::vector<glm::dvec2> //Fother
     //, std::vector<glm::dvec2> //Ftot
     //, std::vector<glm::ivec2> //gridPos in background grid
@@ -167,6 +168,7 @@ public:
       get<Attr::eNormal>().push_back(p.normal);
       get<Attr::ePressForce>().push_back(p.Fpress);
       get<Attr::eViscForce>().push_back(p.Fvisc);
+      get<Attr::eSurfForce>().push_back(p.Fvisc);
     }
     
     Particle particle(size_t i) const
@@ -177,7 +179,7 @@ public:
         get<Attr::eNormal    >()[i],
         get<Attr::ePressForce>()[i],
         get<Attr::eViscForce >()[i],
-        _cloud[i].Fsurf,
+        get<Attr::eSurfForce >()[i],
         _cloud[i].Fother,
         _cloud[i].Ftot,
         _cloud[i].gridPos,
