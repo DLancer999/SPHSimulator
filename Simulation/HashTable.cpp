@@ -121,7 +121,7 @@ void HashTable::findNei(ParticleCloud& cloud)
     const size_t nPart = cloud.size();
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        Particle& part = cloud[iPart];
+        LesserParticle& part = cloud[iPart];
         glm::dvec2 pos = part.position;
         glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
         glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
@@ -138,7 +138,7 @@ void HashTable::findNei(ParticleCloud& cloud)
     #pragma omp parallel for
     for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        Particle& iParticle = cloud[iPart];
+        LesserParticle& iParticle = cloud[iPart];
         for (int iGrid=-1;iGrid<2;iGrid++)
         {
             for (int jGrid=-1;jGrid<2;jGrid++)

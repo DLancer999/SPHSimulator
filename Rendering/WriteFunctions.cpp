@@ -16,7 +16,7 @@ License
 
 #include "WriteFunctions.hpp"
 
-#include "Simulation/Particle.hpp"
+#include "Simulation/ParticleCloud.hpp"
 #include "Simulation/Settings.hpp"
 
 //********************************************************************************
@@ -39,7 +39,7 @@ void writeRAWfile(std::string fileName, const ParticleCloud& cloud)
     const unsigned NParticles = unsigned(cloud.size());
     for (unsigned i=0;i<NParticles;i++)
     {
-        const Particle& iParticle = cloud[i];
+        const LesserParticle& iParticle = cloud[i];
         outfile<<std::scientific;
         outfile<<i<<"\t"                    
                <<iParticle.position.x<<"\t" 
@@ -182,7 +182,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
-                            const Particle& neiParticle = cloud[neiParts[neiPart]];
+                            const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);
                             if (dist>1.e-10) 
                             {
@@ -234,7 +234,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         const unsigned nNei = unsigned(neiParts.size());
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
-                            const Particle& neiParticle = cloud[neiParts[neiPart]];
+                            const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-neiParticle.position);
                             if (dist<SPHSettings::initDx*0.4) inFluid=true;
                             if (inFluid) 

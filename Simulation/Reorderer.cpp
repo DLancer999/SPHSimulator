@@ -22,6 +22,7 @@ License
 #include <boost/range/adaptor/indexed.hpp>
 
 #include <numeric>
+#include <limits>
 
 using boost::adaptors::transformed;
 using boost::adaptors::indexed;
@@ -46,8 +47,11 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
     static auto reorTimerID = Statistics::createTimer("Reorderer::reorderTimer");
     Statistics::TimerGuard reorderTimerGuard(reorTimerID);
 
-    auto getPos = [](const Particle& p){ return p.position; };
-    glm::dvec2 minPos = cloud.front().position;
+    //if (cloud.empty())
+    //  return;
+
+    auto getPos = [](const LesserParticle& p){ return p.position; };
+    glm::dvec2 minPos = glm::dvec2(std::numeric_limits<double>::max());
     for (const auto& iPos : cloud | transformed(getPos) ) {
       if (minPos.x > iPos.x)
         minPos.x = iPos.x;
