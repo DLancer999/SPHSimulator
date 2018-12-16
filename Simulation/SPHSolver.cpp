@@ -119,12 +119,13 @@ void SPHSolver::WCSPHStep()
 
         auto& particlePos = cloud_.get<Attr::ePosition>();
         auto& particleVel = cloud_.get<Attr::eVelocity>();
+        const auto& particleFPress = cloud_.get<Attr::ePressForce>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
-            cloud_[iPart].Ftot = cloud_[iPart].Fpress
+            cloud_[iPart].Ftot = particleFPress[iPart]
                                + cloud_[iPart].Fvisc
                                + cloud_[iPart].Fsurf
                                + cloud_[iPart].Fother;
@@ -197,12 +198,15 @@ void SPHSolver::PCISPHStep()
 
             auto& particlePos = cloud_.get<Attr::ePosition>();
             auto& particleVel = cloud_.get<Attr::eVelocity>();
+            const auto& particleFPress = cloud_.get<Attr::ePressForce>();
+
             for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
             {
+                const glm::dvec2 iPress = particleFPress[iPart];
                 LesserParticle& iParticle = cloud_[iPart];
-                iParticle.Ftot+= iParticle.Fpress;
+                iParticle.Ftot+= iPress;
 
-                glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
+                glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iPress;
                 particleVel[iPart] += update;
                 particlePos[iPart] += SimulationSettings::dt*update;
             }
@@ -601,6 +605,9 @@ void SPHSolver::calcPressForces()
     static auto pressForceTimerID = Statistics::createTimer("SPHSolver::pressForceTimer");
     Statistics::TimerGuard pressForceGuard(pressForceTimerID);
 
+
+    auto& particleFPress = cloud_.get<Attr::ePressForce>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -624,7 +631,7 @@ void SPHSolver::calcPressForces()
 
         Fp*=-0.5*Kernel::spiky::gradW_coeff();
         
-        iParticle.Fpress= Fp;
+        particleFPress[iPart] = Fp;
     }
 }
 

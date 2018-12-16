@@ -80,6 +80,7 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
     ::indexedReordering(cloud.get<Attr::ePosition>(), indexes);
     ::indexedReordering(cloud.get<Attr::eVelocity>(), indexes);
     ::indexedReordering(cloud.get<Attr::eNormal>(), indexes);
+    ::indexedReordering(cloud.get<Attr::ePressForce>(), indexes);
 }
 
 
