@@ -122,6 +122,7 @@ void SPHSolver::WCSPHStep()
         const auto& particleFPress = cloud_.get<Attr::ePressForce>();
         const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
         const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
+        const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
@@ -130,7 +131,7 @@ void SPHSolver::WCSPHStep()
             cloud_[iPart].Ftot = particleFPress[iPart]
                                + particleFVisc [iPart]
                                + particleFSurf [iPart]
-                               + cloud_[iPart].Fother;
+                               + particleFOther[iPart];
 
             particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
@@ -156,17 +157,18 @@ void SPHSolver::PCISPHStep()
 
         auto& particlePos = cloud_.get<Attr::ePosition>();
         auto& particleVel = cloud_.get<Attr::eVelocity>();
-        const auto& particleFVisc  = cloud_.get<Attr::eViscForce>();
-        const auto& particleFSurf  = cloud_.get<Attr::eSurfForce>();
+        const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
+        const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
+        const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
             LesserParticle& particle = cloud_[iPart];
-            particle.Ftot = particleFVisc[iPart]
-                          + particleFSurf[iPart]
-                          + particle.Fother;
+            particle.Ftot = particleFVisc [iPart]
+                          + particleFSurf [iPart]
+                          + particleFOther[iPart];
 
             particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particle.Ftot;
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
@@ -514,6 +516,9 @@ void SPHSolver::calcOtherForces()
 
     const auto& particlePos = cloud_.get<Attr::ePosition>();
     auto& particleVel = cloud_.get<Attr::eVelocity>();
+    auto& particleFOther = cloud_.get<Attr::eOtherForce>();
+
+    const glm::dvec2 grav = SPHSettings::grav;
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
@@ -521,7 +526,7 @@ void SPHSolver::calcOtherForces()
     {
         auto& particle = cloud_[iPart];
         //gravity
-        particle.Fother = SPHSettings::grav;
+        particleFOther[iPart] = grav;
 
         //boundary forces
         glm::dvec2 iPos = particlePos[iPart];
@@ -538,14 +543,14 @@ void SPHSolver::calcOtherForces()
                 tmpiPos = glm::dvec2(iPos.x,0.0)*dScaledh;
                 bndPos  = glm::dvec2(BoundaryConditions::bndBox.minX(),0.0)*dScaledh;
                 double dist = glm::length(tmpiPos-bndPos);
-                particle.Fother.x+=BoundaryConditions::bndCoeff
-                                  *Kernel::poly6::W(dist)
-                                  *Kernel::poly6::W_coeff();
+                particleFOther[iPart].x+=BoundaryConditions::bndCoeff
+                                        *Kernel::poly6::W(dist)
+                                        *Kernel::poly6::W_coeff();
             }
             else
             {
                 particleVel[iPart].x=0.;
-                particle.Fother.x+=BoundaryConditions::bndCoeff*W0;
+                particleFOther[iPart].x+=BoundaryConditions::bndCoeff*W0;
             }
         }
         else if (BoundaryConditions::bndBox.maxX()-iPos.x<scaledh)
@@ -555,14 +560,14 @@ void SPHSolver::calcOtherForces()
                 tmpiPos = glm::dvec2(iPos.x,0.0)*dScaledh;
                 bndPos  = glm::dvec2(BoundaryConditions::bndBox.maxX(),0.0)*dScaledh;
                 double dist = glm::length(tmpiPos-bndPos);
-                particle.Fother.x-=BoundaryConditions::bndCoeff
-                                  *Kernel::poly6::W(dist)
-                                  *Kernel::poly6::W_coeff();
+                particleFOther[iPart].x-=BoundaryConditions::bndCoeff
+                                        *Kernel::poly6::W(dist)
+                                        *Kernel::poly6::W_coeff();
             }
             else
             {
                 particleVel[iPart].x=0.;
-                particle.Fother.x-=BoundaryConditions::bndCoeff*W0;
+                particleFOther[iPart].x-=BoundaryConditions::bndCoeff*W0;
             }
         }
         if (iPos.y-BoundaryConditions::bndBox.minY()<scaledh)
@@ -572,14 +577,14 @@ void SPHSolver::calcOtherForces()
                 tmpiPos = glm::dvec2(0.0,iPos.y)*dScaledh;
                 bndPos  = glm::dvec2(0.0,BoundaryConditions::bndBox.minY())*dScaledh;
                 double dist = glm::length(tmpiPos-bndPos);
-                particle.Fother.y+=BoundaryConditions::bndCoeff
-                                  *Kernel::poly6::W(dist)
-                                  *Kernel::poly6::W_coeff();
+                particleFOther[iPart].y+=BoundaryConditions::bndCoeff
+                                       *Kernel::poly6::W(dist)
+                                       *Kernel::poly6::W_coeff();
             }
             else
             {
                 particleVel[iPart].y=0.;
-                particle.Fother.y+=BoundaryConditions::bndCoeff*W0;
+                particleFOther[iPart].y+=BoundaryConditions::bndCoeff*W0;
             }
         }
         else if (BoundaryConditions::bndBox.maxY()-iPos.y<scaledh)
@@ -589,18 +594,18 @@ void SPHSolver::calcOtherForces()
                 tmpiPos = glm::dvec2(0.0,iPos.y)*dScaledh;
                 bndPos  = glm::dvec2(0.0,BoundaryConditions::bndBox.maxY())*dScaledh;
                 double dist = glm::length(tmpiPos-bndPos);
-                particle.Fother.y-=BoundaryConditions::bndCoeff
-                                  *Kernel::poly6::W(dist)
-                                  *Kernel::poly6::W_coeff();
+                particleFOther[iPart].y-=BoundaryConditions::bndCoeff
+                                        *Kernel::poly6::W(dist)
+                                        *Kernel::poly6::W_coeff();
             }
             else
             {
                 particleVel[iPart].y=0.;
-                particle.Fother.y-=BoundaryConditions::bndCoeff*W0;
+                particleFOther[iPart].y-=BoundaryConditions::bndCoeff*W0;
             }
         }
 
-        particle.Fother*= particle.density;
+        particleFOther[iPart] *= particle.density;
     }
 }
 
