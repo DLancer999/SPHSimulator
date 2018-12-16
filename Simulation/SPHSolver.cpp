@@ -21,6 +21,8 @@ License
 #include "Reorderer.hpp"
 #include "Statistics/Statistics.hpp"
 
+#include <boost/range/combine.hpp>
+
 //********************************************************************************
 void SPHSolver::init()
 //********************************************************************************
@@ -116,6 +118,7 @@ void SPHSolver::WCSPHStep()
         Statistics::TimerGuard g(updatePosTimerID);
 
         auto& particlePos = cloud_.get<Attr::ePosition>();
+        auto& particleVel = cloud_.get<Attr::eVelocity>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
@@ -126,8 +129,8 @@ void SPHSolver::WCSPHStep()
                                + cloud_[iPart].Fsurf
                                + cloud_[iPart].Fother;
 
-            cloud_[iPart].velocity += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
-            particlePos[iPart]     += SimulationSettings::dt*cloud_[iPart].velocity;
+            particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*cloud_[iPart].Ftot;
+            particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
 }
@@ -149,6 +152,7 @@ void SPHSolver::PCISPHStep()
         Statistics::TimerGuard g(updatePosTimerID);
 
         auto& particlePos = cloud_.get<Attr::ePosition>();
+        auto& particleVel = cloud_.get<Attr::eVelocity>();
 
         const size_t nPart = cloud_.size();
         #pragma omp parallel for
@@ -157,8 +161,8 @@ void SPHSolver::PCISPHStep()
             LesserParticle& particle = cloud_[iPart];
             particle.Ftot = particle.Fvisc+particle.Fsurf+particle.Fother;
 
-            particle.velocity  += SimulationSettings::dt*particle.ddensity*particle.Ftot;
-            particlePos[iPart] += SimulationSettings::dt*particle.velocity;
+            particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particle.Ftot;
+            particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
 
@@ -192,13 +196,14 @@ void SPHSolver::PCISPHStep()
             calcPressForces();
 
             auto& particlePos = cloud_.get<Attr::ePosition>();
+            auto& particleVel = cloud_.get<Attr::eVelocity>();
             for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
             {
                 LesserParticle& iParticle = cloud_[iPart];
                 iParticle.Ftot+= iParticle.Fpress;
 
                 glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iParticle.Fpress;
-                iParticle.velocity += update;
+                particleVel[iPart] += update;
                 particlePos[iPart] += SimulationSettings::dt*update;
             }
         }
@@ -496,6 +501,7 @@ void SPHSolver::calcOtherForces()
     Statistics::TimerGuard otherForceGuard(otherForceTimerID);
 
     const auto& particlePos = cloud_.get<Attr::ePosition>();
+    auto& particleVel = cloud_.get<Attr::eVelocity>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
@@ -526,7 +532,7 @@ void SPHSolver::calcOtherForces()
             }
             else
             {
-                particle.velocity.x=0.;
+                particleVel[iPart].x=0.;
                 particle.Fother.x+=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -543,7 +549,7 @@ void SPHSolver::calcOtherForces()
             }
             else
             {
-                particle.velocity.x=0.;
+                particleVel[iPart].x=0.;
                 particle.Fother.x-=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -560,7 +566,7 @@ void SPHSolver::calcOtherForces()
             }
             else
             {
-                particle.velocity.y=0.;
+                particleVel[iPart].y=0.;
                 particle.Fother.y+=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -577,7 +583,7 @@ void SPHSolver::calcOtherForces()
             }
             else
             {
-                particle.velocity.y=0.;
+                particleVel[iPart].y=0.;
                 particle.Fother.y-=BoundaryConditions::bndCoeff*W0;
             }
         }
@@ -627,6 +633,8 @@ void SPHSolver::calcViscForces()
     static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::viscForceTimer");
     Statistics::TimerGuard viscForceGuard(viscForceTimerID);
 
+    const auto& particleVel = cloud_.get<Attr::eVelocity>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -634,6 +642,7 @@ void SPHSolver::calcViscForces()
         glm::dvec2 Fv = glm::dvec2(0.0);
 
         LesserParticle& iParticle = cloud_[iPart];
+        glm::dvec2 iVel = particleVel[iPart];
 
         const unsigned Nnei = unsigned(iParticle.nei.size());
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
@@ -647,7 +656,7 @@ void SPHSolver::calcViscForces()
 
             Fv+= jParticle.mass
                *jParticle.ddensity
-               *(jParticle.velocity-iParticle.velocity)
+               *(particleVel[jPart]-iVel)
                *Kernel::visc::laplW(iPartNeiI.dist);
         }
         Fv*=SPHSettings::viscosity*Kernel::visc::laplW_coeff();
@@ -710,11 +719,13 @@ double SPHSolver::calcCFL() const
     static auto clfTimerID  = Statistics::createTimer("SPHSolver::calcCFL");
     Statistics::TimerGuard clfGuard(clfTimerID);
 
+    const auto& particleVel = cloud_.get<Attr::eVelocity>();
+
     double vMax = 0.0;
 
     for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
     {
-        double vLen2 = glm::length2(cloud_[iPart].velocity);
+        double vLen2 = glm::length2(particleVel[iPart]);
         if (vLen2 > vMax) vMax = vLen2;
     }
 
@@ -730,9 +741,14 @@ double SPHSolver::calcKineticEnergy() const
     static auto kineticTimerID  = Statistics::createTimer("SPHSolver::calcKineticEnergy");
     Statistics::TimerGuard kinetickGuard(kineticTimerID);
 
-    double kEnergy = 0.5*std::accumulate(cloud_.begin(), cloud_.end(), 0.,
-        [](double k, const LesserParticle& p) {
-            return k + p.mass*glm::dot(p.velocity, p.velocity);
+    const auto& particleVel = cloud_.get<Attr::eVelocity>();
+    auto accumRange = boost::combine(cloud_, particleVel);
+
+    double kEnergy = 0.5*std::accumulate(accumRange.begin(), accumRange.end(), 0.,
+        [](double k, const auto& elem) {
+          const double mass = boost::get<0>(elem).mass;
+          const glm::dvec2& vel = boost::get<1>(elem);
+          return k + mass*glm::dot(vel, vel);
         }
     );
 

@@ -163,6 +163,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
     if (RenderSettings::fileRender==RenderSettings::METABALL)
     {
         const auto& particlePos = cloud.get<Attr::ePosition>();
+        const auto& particleVel = cloud.get<Attr::eVelocity>();
         for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
@@ -184,13 +185,12 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
                             const unsigned nei = neiParts[neiPart];
-                            const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-particlePos[nei]);
                             if (dist>1.e-10) 
                             {
                                 double potCon = 1./(dist*dist);
                                 potential+= potCon;
-                                vel += neiParticle.velocity*potCon;
+                                vel += particleVel[nei]*potCon;
                             }
                             inFluid = (potential>=potentialThres);
                             if (inFluid) break;
@@ -217,6 +217,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
     else if (RenderSettings::fileRender==RenderSettings::DISCRETE)
     {
         const auto& particlePos = cloud.get<Attr::ePosition>();
+        const auto& particleVel = cloud.get<Attr::eVelocity>();
         for (unsigned j=0;j<RenderSettings::height;j++)
         {
             pos.y = mult*BoundaryConditions::bndBox.maxX()-double(j)*denomHEIGTH*(mult*BoundaryConditions::bndBox.dx());
@@ -238,12 +239,11 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                         for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                         {
                             const unsigned nei = neiParts[neiPart];
-                            const LesserParticle& neiParticle = cloud[neiParts[neiPart]];
                             double dist = glm::length(pos-particlePos[nei]);
                             if (dist<SPHSettings::initDx*0.4) inFluid=true;
                             if (inFluid) 
                             {
-                                float velMag = float(glm::length(neiParticle.velocity));
+                                float velMag = float(glm::length(particleVel[nei]));
                                 float scale = 0.2f;
                                 pixelColor[iNode] = glm::vec3(
                                                 scale*velMag,

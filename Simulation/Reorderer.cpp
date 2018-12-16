@@ -78,6 +78,7 @@ void Reorderer::reorderCloud(ParticleCloud& cloud)
 
     ::indexedReordering(cloud.getCloud(), indexes);
     ::indexedReordering(cloud.get<Attr::ePosition>(), indexes);
+    ::indexedReordering(cloud.get<Attr::eVelocity>(), indexes);
 }
 
 

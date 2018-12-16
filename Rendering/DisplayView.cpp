@@ -226,6 +226,7 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
     glClear( GL_COLOR_BUFFER_BIT );
     
     const auto& particlePos = cloud.get<Attr::ePosition>();
+    const auto& particleVel = cloud.get<Attr::eVelocity>();
 
     //update screen positions
     const size_t NParticles = cloud.size();
@@ -246,7 +247,7 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
         }
         else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
         {
-            float velMag = float(glm::length(cloud[iPart].velocity));
+            float velMag = float(glm::length(particleVel[iPart]));
             float scale = 0.2f;
             //blue to white
             sColor_[iPart] = glm::vec3

@@ -27,7 +27,7 @@ class LesserParticle
 {
 public:
     //glm::dvec2 position;
-    glm::dvec2 velocity;
+    //glm::dvec2 velocity;
     glm::dvec2 normal;
     glm::dvec2 Fpress;
     glm::dvec2 Fvisc;
@@ -45,7 +45,7 @@ public:
 public:
     LesserParticle():
     //position(-100.0),
-    velocity(0.0),
+    //velocity(0.0),
     normal(0.0),
     Fpress(0.0),
     Fvisc(0.0),
@@ -63,7 +63,7 @@ public:
 
     LesserParticle(const Particle& p):
     //position   (p.position),
-    velocity   (p.velocity),
+    //velocity   (p.velocity),
     normal     (p.normal),
     Fpress     (p.Fpress),
     Fvisc      (p.Fvisc),
@@ -83,6 +83,7 @@ public:
 //order must be in aggrement with data tuple
 enum class Attr : size_t {
   ePosition = 0,
+  eVelocity,
   nAttr
 };
 
@@ -126,11 +127,13 @@ public:
     void reserve(size_t s) {
       _cloud.reserve(s);
       get<Attr::ePosition>().reserve(s);
+      get<Attr::eVelocity>().reserve(s);
     }
 
     void push_back(const Particle& p) {
       _cloud.push_back(LesserParticle{p});
       get<Attr::ePosition>().push_back(p.position);
+      get<Attr::eVelocity>().push_back(p.velocity);
     }
 
     //void push_back(const LesserParticle& p) {
@@ -141,7 +144,7 @@ public:
     {
       return Particle {
         get<Attr::ePosition>()[i],
-        _cloud[i].velocity,
+        get<Attr::eVelocity>()[i],
         _cloud[i].normal,
         _cloud[i].Fpress,
         _cloud[i].Fvisc,
@@ -169,6 +172,20 @@ private:
     ParticleVector _cloud;
     std::tuple<
       std::vector<glm::dvec2> //position
+    , std::vector<glm::dvec2> //velocity
+    //, std::vector<glm::dvec2> //normal
+    //, std::vector<glm::dvec2> //Fpress
+    //, std::vector<glm::dvec2> //Fvisc
+    //, std::vector<glm::dvec2> //Fsurf
+    //, std::vector<glm::dvec2> //Fother
+    //, std::vector<glm::dvec2> //Ftot
+    //, std::vector<glm::ivec2> //gridPos in background grid
+    //, std::vector<double>     //mass
+    //, std::vector<double>     //density
+    //, std::vector<double>     //ddensity
+    //, std::vector<double>     //densityErr
+    //, std::vector<double>     //pressure
+    //, std::vector<std::vector<Neigbhor>> // list of neighbours
     > _data;
 };
 
