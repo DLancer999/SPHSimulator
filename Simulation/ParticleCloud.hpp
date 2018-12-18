@@ -43,7 +43,7 @@ public:
     //glm::dvec2 Fsurf;
     //glm::dvec2 Fother;
     //glm::dvec2 Ftot;
-    double mass;
+    //double mass;
     double density;
     double ddensity;    //1./density
     double densityErr;
@@ -60,7 +60,7 @@ public:
     //Fsurf(0.0),
     //Fother(0.0),
     //Ftot(0.0),
-    mass(0.0),
+    //mass(0.0),
     density(0.0),
     ddensity(0.0),
     densityErr(0.0),
@@ -77,7 +77,7 @@ public:
     //Fsurf      (p.Fsurf),
     //Fother     (p.Fother),
     //Ftot       (p.Ftot),
-    mass       (p.mass),
+    //mass       (p.mass),
     density    (p.density),
     ddensity   (p.ddensity),
     densityErr (p.densityErr),
@@ -96,6 +96,7 @@ enum class Attr : size_t {
   eSurfForce,
   eOtherForce,
   eTotalForce,
+  eMass,
   nAttr
 };
 
@@ -111,7 +112,7 @@ private:
     , std::vector<glm::dvec2> //Fsurf
     , std::vector<glm::dvec2> //Fother
     , std::vector<glm::dvec2> //Ftot
-    //, std::vector<double>     //mass
+    , std::vector<double    > //mass
     //, std::vector<double>     //density
     //, std::vector<double>     //ddensity
     //, std::vector<double>     //densityErr
@@ -169,6 +170,7 @@ public:
       get<Attr::eSurfForce>().push_back(p.Fvisc);
       get<Attr::eOtherForce>().push_back(p.Fother);
       get<Attr::eTotalForce>().push_back(p.Ftot);
+      get<Attr::eMass>().push_back(p.mass);
     }
     
     Particle particle(size_t i) const
@@ -182,7 +184,7 @@ public:
         get<Attr::eSurfForce  >()[i],
         get<Attr::eOtherForce >()[i],
         get<Attr::eTotalForce >()[i],
-        _cloud[i].mass,
+        get<Attr::eMass >()[i],
         _cloud[i].density,
         _cloud[i].ddensity,
         _cloud[i].densityErr,

@@ -394,6 +394,8 @@ void SPHSolver::calcDensity()
     static auto densCalcTimerID   = Statistics::createTimer("SPHSolver::densCalcTimer");
     Statistics::TimerGuard densGuard(densCalcTimerID);
 
+    const auto& particleMass = cloud_.get<Attr::eMass>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -406,9 +408,8 @@ void SPHSolver::calcDensity()
         for (unsigned i = 0; i<Nnei;i++)
         {
             unsigned jPart = iParticle.nei[i].ID;
-            LesserParticle& jParticle = cloud_[jPart];
 
-            dens += jParticle.mass*Kernel::poly6::W(iParticle.nei[i].dist);
+            dens += particleMass[jPart]*Kernel::poly6::W(iParticle.nei[i].dist);
         }
         dens*=Kernel::poly6::W_coeff();
 
@@ -469,6 +470,7 @@ void SPHSolver::calcNormal()
     static auto normalCalcTimerID   = Statistics::createTimer("SPHSolver::normalCalcTimer");
     Statistics::TimerGuard normalGuard(normalCalcTimerID);
 
+    const auto& particleMass = cloud_.get<Attr::eMass>();
     auto& particleNormal = cloud_.get<Attr::eNormal>();
 
     const size_t nPart = cloud_.size();
@@ -485,7 +487,7 @@ void SPHSolver::calcNormal()
             unsigned jPart = iParticle.nei[i].ID;
             LesserParticle& jParticle = cloud_[jPart];
 
-            norm += jParticle.mass*jParticle.ddensity
+            norm += particleMass[jPart]*jParticle.ddensity
                   *Kernel::poly6::gradW(iParticle.nei[i].dir,iParticle.nei[i].dist);
         }
         norm *= Kernel::poly6::gradW_coeff()*Kernel::SmoothingLength::h;
@@ -621,7 +623,7 @@ void SPHSolver::calcPressForces()
     static auto pressForceTimerID = Statistics::createTimer("SPHSolver::pressForceTimer");
     Statistics::TimerGuard pressForceGuard(pressForceTimerID);
 
-
+    const auto& particleMass = cloud_.get<Attr::eMass>();
     auto& particleFPress = cloud_.get<Attr::ePressForce>();
 
     const size_t nPart = cloud_.size();
@@ -640,7 +642,7 @@ void SPHSolver::calcPressForces()
             if (iPart==jPart) continue;
             LesserParticle& jParticle = cloud_[jPart];
 
-            Fp+=jParticle.mass*jParticle.ddensity 
+            Fp+=particleMass[jPart]*jParticle.ddensity 
                *(iParticle.pressure + jParticle.pressure)
                *Kernel::spiky::gradW(iPartNeiI.dir,iPartNeiI.dist);
         }
@@ -659,6 +661,7 @@ void SPHSolver::calcViscForces()
     Statistics::TimerGuard viscForceGuard(viscForceTimerID);
 
     const auto& particleVel = cloud_.get<Attr::eVelocity>();
+    const auto& particleMass = cloud_.get<Attr::eMass>();
     auto& particleFVisc = cloud_.get<Attr::eViscForce>();
 
     const size_t nPart = cloud_.size();
@@ -680,7 +683,7 @@ void SPHSolver::calcViscForces()
             if (iPart==jPart) continue;
             LesserParticle& jParticle = cloud_[jPart];
 
-            Fv+= jParticle.mass
+            Fv+= particleMass[jPart]
                *jParticle.ddensity
                *(particleVel[jPart]-iVel)
                *Kernel::visc::laplW(iPartNeiI.dist);
@@ -699,6 +702,7 @@ void SPHSolver::calcSurfForces()
     Statistics::TimerGuard surfForceGuard(surfForceTimerID);
 
     const auto& particleNormal = cloud_.get<Attr::eNormal>();
+    const auto& particleMass = cloud_.get<Attr::eMass>();
     auto& particleFSurf = cloud_.get<Attr::eSurfForce>();
 
     const size_t nPart = cloud_.size();
@@ -711,6 +715,7 @@ void SPHSolver::calcSurfForces()
 
         LesserParticle& iParticle = cloud_[iPart];
         const glm::dvec2 iNorm = particleNormal[iPart];
+        const double iMass = particleMass[iPart];
 
         const unsigned Nnei = unsigned(iParticle.nei.size());
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
@@ -725,12 +730,12 @@ void SPHSolver::calcSurfForces()
             correction = 2.*SPHSettings::particleDensity/(iParticle.density+jParticle.density);
 
             Fcohesion+= correction
-                   *iParticle.mass*jParticle.mass 
+                   *iMass*particleMass[jPart]
                    *Kernel::surface::C(iPartNeiI.dist)
                    *iPartNeiI.dir/iPartNeiI.dist;
 
             Fcurvature+= correction
-                   *iParticle.mass
+                   *iMass
                    *(iNorm - particleNormal[jPart]);
         }
 
@@ -771,12 +776,13 @@ double SPHSolver::calcKineticEnergy() const
     static auto kineticTimerID  = Statistics::createTimer("SPHSolver::calcKineticEnergy");
     Statistics::TimerGuard kinetickGuard(kineticTimerID);
 
-    const auto& particleVel = cloud_.get<Attr::eVelocity>();
-    auto accumRange = boost::combine(cloud_, particleVel);
+    const auto& particleVel  = cloud_.get<Attr::eVelocity>();
+    const auto& particleMass = cloud_.get<Attr::eMass>();
+    auto accumRange = boost::combine(particleMass, particleVel);
 
     double kEnergy = 0.5*std::accumulate(accumRange.begin(), accumRange.end(), 0.,
         [](double k, const auto& elem) {
-          const double mass = boost::get<0>(elem).mass;
+          const double mass = boost::get<0>(elem);
           const glm::dvec2& vel = boost::get<1>(elem);
           return k + mass*glm::dot(vel, vel);
         }
