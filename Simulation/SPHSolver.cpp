@@ -396,6 +396,8 @@ void SPHSolver::calcDensity()
 
     const auto& particleMass = cloud_.get<Attr::eMass>();
 
+    auto& particleDens = cloud_.get<Attr::eDensity>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -413,7 +415,7 @@ void SPHSolver::calcDensity()
         }
         dens*=Kernel::poly6::W_coeff();
 
-        iParticle.density = dens;
+        particleDens[iPart] = dens;
         iParticle.ddensity = 1./dens;
     }
 }
@@ -425,12 +427,14 @@ void SPHSolver::calcDensityErr()
     static auto densErrCalcTimerID   = Statistics::createTimer("SPHSolver::densErrCalcTimer");
     Statistics::TimerGuard densErrGuard(densErrCalcTimerID);
 
+    const auto& particleDens = cloud_.get<Attr::eDensity>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
         auto& particle = cloud_[iPart];
-        particle.densityErr = particle.density - SPHSettings::particleDensity;
+        particle.densityErr = particleDens[iPart] - SPHSettings::particleDensity;
     }
 }
 
@@ -453,13 +457,15 @@ void SPHSolver::calcPressure()
     static auto pressCalcTimerID   = Statistics::createTimer("SPHSolver::pressureCalcTimer");
     Statistics::TimerGuard pressGuard(pressCalcTimerID);
 
+    const auto& particleDens = cloud_.get<Attr::eDensity>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
         auto& particle = cloud_[iPart];
         //p = k(rho-rho0)
-        particle.pressure = fmax(SPHSettings::stiffness*(particle.density-SPHSettings::particleDensity),0.0);
+        particle.pressure = fmax(SPHSettings::stiffness*(particleDens[iPart] -SPHSettings::particleDensity),0.0);
     }
 }
 
@@ -522,6 +528,7 @@ void SPHSolver::calcOtherForces()
     Statistics::TimerGuard otherForceGuard(otherForceTimerID);
 
     const auto& particlePos = cloud_.get<Attr::ePosition>();
+    const auto& particleDens = cloud_.get<Attr::eDensity>();
     auto& particleVel = cloud_.get<Attr::eVelocity>();
     auto& particleFOther = cloud_.get<Attr::eOtherForce>();
 
@@ -531,7 +538,6 @@ void SPHSolver::calcOtherForces()
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        auto& particle = cloud_[iPart];
         //gravity
         particleFOther[iPart] = grav;
 
@@ -612,7 +618,7 @@ void SPHSolver::calcOtherForces()
             }
         }
 
-        particleFOther[iPart] *= particle.density;
+        particleFOther[iPart] *= particleDens[iPart];
     }
 }
 
@@ -703,6 +709,7 @@ void SPHSolver::calcSurfForces()
 
     const auto& particleNormal = cloud_.get<Attr::eNormal>();
     const auto& particleMass = cloud_.get<Attr::eMass>();
+    const auto& particleDens = cloud_.get<Attr::eDensity>();
     auto& particleFSurf = cloud_.get<Attr::eSurfForce>();
 
     const size_t nPart = cloud_.size();
@@ -716,6 +723,7 @@ void SPHSolver::calcSurfForces()
         LesserParticle& iParticle = cloud_[iPart];
         const glm::dvec2 iNorm = particleNormal[iPart];
         const double iMass = particleMass[iPart];
+        const double iDens = particleDens[iPart];
 
         const unsigned Nnei = unsigned(iParticle.nei.size());
         //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
@@ -725,9 +733,8 @@ void SPHSolver::calcSurfForces()
             const unsigned jPart = iPartNeiI.ID;
             //std::cout<<" "<<jPart;
             if (iPart==jPart) continue;
-            LesserParticle& jParticle = cloud_[jPart];
 
-            correction = 2.*SPHSettings::particleDensity/(iParticle.density+jParticle.density);
+            correction = 2.*SPHSettings::particleDensity/(iDens + particleDens[jPart]);
 
             Fcohesion+= correction
                    *iMass*particleMass[jPart]
@@ -742,7 +749,7 @@ void SPHSolver::calcSurfForces()
         Fcohesion *= Kernel::surface::C_coeff();
 
         particleFSurf[iPart] = -SPHSettings::surfTension
-                             * iParticle.density
+                             * iDens
                              * (Fcohesion+Fcurvature);
     }
 }
