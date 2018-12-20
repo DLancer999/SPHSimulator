@@ -150,8 +150,9 @@ void SPHSolver::PCISPHStep()
     auto& particlePos = cloud_.get<Attr::ePosition>();
     auto& particleVel = cloud_.get<Attr::eVelocity>();
     auto& particleFTot = cloud_.get<Attr::eTotalForce>();
-    const auto& particleFPress = cloud_.get<Attr::ePressForce>();
-    const auto& particleDDens  = cloud_.get<Attr::eDDensity>();
+    const auto& particleFPress  = cloud_.get<Attr::ePressForce>();
+    const auto& particleDDens   = cloud_.get<Attr::eDDensity>();
+    const auto& particleDensErr = cloud_.get<Attr::eDensErr>();
 
     calcDensity();
     calcNormal();
@@ -201,12 +202,8 @@ void SPHSolver::PCISPHStep()
             calcDensityErr();
             updatePressure();
 
-            densErr = 0.;
-            for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
-            {
-                if (densErr<cloud_[iPart].densityErr)
-                    densErr = cloud_[iPart].densityErr;
-            }
+            auto itMax = std::max_element(particleDensErr.begin(), particleDensErr.end());
+            densErr = (itMax != particleDensErr.end()) ? (*itMax) : 0.;
 
             if (iter==0)
             iter++;
@@ -428,13 +425,13 @@ void SPHSolver::calcDensityErr()
     Statistics::TimerGuard densErrGuard(densErrCalcTimerID);
 
     const auto& particleDens = cloud_.get<Attr::eDensity>();
+    auto& particleDensErr = cloud_.get<Attr::eDensErr>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        auto& particle = cloud_[iPart];
-        particle.densityErr = particleDens[iPart] - SPHSettings::particleDensity;
+        particleDensErr[iPart] = particleDens[iPart] - SPHSettings::particleDensity;
     }
 }
 
@@ -509,12 +506,14 @@ void SPHSolver::updatePressure()
     static auto updatePressTimerID   = Statistics::createTimer("SPHSolver::updatePressure");
     Statistics::TimerGuard updatePressGuard(updatePressTimerID);
 
+    const auto& particleDensErr = cloud_.get<Attr::eDensErr>();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
         auto& particle = cloud_[iPart];
-        particle.pressure = fmax(delta_*particle.densityErr,0.0);
+        particle.pressure = fmax(delta_*particleDensErr[iPart],0.0);
       //cloud_[iPart].pressure = delta_*cloud_[iPart].densityErr;
     }
 }
