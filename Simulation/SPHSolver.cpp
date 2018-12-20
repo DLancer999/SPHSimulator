@@ -123,6 +123,7 @@ void SPHSolver::WCSPHStep()
         const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
         const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
         const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
+        const auto& particleDDens  = cloud_.get<Attr::eDDensity  >();
 
         auto& particleFTotal = cloud_.get<Attr::eTotalForce>();
 
@@ -135,7 +136,7 @@ void SPHSolver::WCSPHStep()
                                   + particleFSurf [iPart]
                                   + particleFOther[iPart];
 
-            particleVel[iPart] += SimulationSettings::dt*cloud_[iPart].ddensity*particleFTotal[iPart];
+            particleVel[iPart] += SimulationSettings::dt*particleDDens[iPart]*particleFTotal[iPart];
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
@@ -145,6 +146,13 @@ void SPHSolver::WCSPHStep()
 void SPHSolver::PCISPHStep() 
 //********************************************************************************
 {
+
+    auto& particlePos = cloud_.get<Attr::ePosition>();
+    auto& particleVel = cloud_.get<Attr::eVelocity>();
+    auto& particleFTot = cloud_.get<Attr::eTotalForce>();
+    const auto& particleFPress = cloud_.get<Attr::ePressForce>();
+    const auto& particleDDens  = cloud_.get<Attr::eDDensity>();
+
     calcDensity();
     calcNormal();
     
@@ -157,8 +165,6 @@ void SPHSolver::PCISPHStep()
         static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::PCISPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
 
-        auto& particlePos = cloud_.get<Attr::ePosition>();
-        auto& particleVel = cloud_.get<Attr::eVelocity>();
         const auto& particleFVisc  = cloud_.get<Attr::eViscForce >();
         const auto& particleFSurf  = cloud_.get<Attr::eSurfForce >();
         const auto& particleFOther = cloud_.get<Attr::eOtherForce>();
@@ -169,12 +175,11 @@ void SPHSolver::PCISPHStep()
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
-            LesserParticle& particle = cloud_[iPart];
             particleFTotal[iPart] = particleFVisc [iPart]
                                   + particleFSurf [iPart]
                                   + particleFOther[iPart];
 
-            particleVel[iPart] += SimulationSettings::dt*particle.ddensity*particleFTotal[iPart];
+            particleVel[iPart] += SimulationSettings::dt*particleDDens[iPart]*particleFTotal[iPart];
             particlePos[iPart] += SimulationSettings::dt*particleVel[iPart];
         }
     }
@@ -208,18 +213,12 @@ void SPHSolver::PCISPHStep()
 
             calcPressForces();
 
-            auto& particlePos = cloud_.get<Attr::ePosition>();
-            auto& particleVel = cloud_.get<Attr::eVelocity>();
-            auto& particleFTot = cloud_.get<Attr::eTotalForce>();
-            const auto& particleFPress = cloud_.get<Attr::ePressForce>();
-
             for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
             {
                 const glm::dvec2 iPress = particleFPress[iPart];
-                LesserParticle& iParticle = cloud_[iPart];
                 particleFTot[iPart] += iPress;
 
-                glm::dvec2 update = SimulationSettings::dt*iParticle.ddensity*iPress;
+                glm::dvec2 update = SimulationSettings::dt*particleDDens[iPart]*iPress;
                 particleVel[iPart] += update;
                 particlePos[iPart] += SimulationSettings::dt*update;
             }
@@ -396,7 +395,8 @@ void SPHSolver::calcDensity()
 
     const auto& particleMass = cloud_.get<Attr::eMass>();
 
-    auto& particleDens = cloud_.get<Attr::eDensity>();
+    auto& particleDens  = cloud_.get<Attr::eDensity>();
+    auto& particleDDens = cloud_.get<Attr::eDDensity>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
@@ -415,8 +415,8 @@ void SPHSolver::calcDensity()
         }
         dens*=Kernel::poly6::W_coeff();
 
-        particleDens[iPart] = dens;
-        iParticle.ddensity = 1./dens;
+        particleDens[iPart]  = dens;
+        particleDDens[iPart] = 1./dens;
     }
 }
 
@@ -476,7 +476,8 @@ void SPHSolver::calcNormal()
     static auto normalCalcTimerID   = Statistics::createTimer("SPHSolver::normalCalcTimer");
     Statistics::TimerGuard normalGuard(normalCalcTimerID);
 
-    const auto& particleMass = cloud_.get<Attr::eMass>();
+    const auto& particleMass  = cloud_.get<Attr::eMass>();
+    const auto& particleDDens = cloud_.get<Attr::eDDensity>();
     auto& particleNormal = cloud_.get<Attr::eNormal>();
 
     const size_t nPart = cloud_.size();
@@ -491,9 +492,8 @@ void SPHSolver::calcNormal()
         for (unsigned i = 0; i<Nnei;i++)
         {
             unsigned jPart = iParticle.nei[i].ID;
-            LesserParticle& jParticle = cloud_[jPart];
 
-            norm += particleMass[jPart]*jParticle.ddensity
+            norm += particleMass[jPart]*particleDDens[jPart]
                   *Kernel::poly6::gradW(iParticle.nei[i].dir,iParticle.nei[i].dist);
         }
         norm *= Kernel::poly6::gradW_coeff()*Kernel::SmoothingLength::h;
@@ -629,7 +629,8 @@ void SPHSolver::calcPressForces()
     static auto pressForceTimerID = Statistics::createTimer("SPHSolver::pressForceTimer");
     Statistics::TimerGuard pressForceGuard(pressForceTimerID);
 
-    const auto& particleMass = cloud_.get<Attr::eMass>();
+    const auto& particleMass  = cloud_.get<Attr::eMass>();
+    const auto& particleDDens = cloud_.get<Attr::eDDensity>();
     auto& particleFPress = cloud_.get<Attr::ePressForce>();
 
     const size_t nPart = cloud_.size();
@@ -648,7 +649,7 @@ void SPHSolver::calcPressForces()
             if (iPart==jPart) continue;
             LesserParticle& jParticle = cloud_[jPart];
 
-            Fp+=particleMass[jPart]*jParticle.ddensity 
+            Fp+=particleMass[jPart]*particleDDens[jPart]
                *(iParticle.pressure + jParticle.pressure)
                *Kernel::spiky::gradW(iPartNeiI.dir,iPartNeiI.dist);
         }
@@ -666,8 +667,9 @@ void SPHSolver::calcViscForces()
     static auto viscForceTimerID  = Statistics::createTimer("SPHSolver::viscForceTimer");
     Statistics::TimerGuard viscForceGuard(viscForceTimerID);
 
-    const auto& particleVel = cloud_.get<Attr::eVelocity>();
-    const auto& particleMass = cloud_.get<Attr::eMass>();
+    const auto& particleVel   = cloud_.get<Attr::eVelocity>();
+    const auto& particleMass  = cloud_.get<Attr::eMass>();
+    const auto& particleDDens = cloud_.get<Attr::eDDensity>();
     auto& particleFVisc = cloud_.get<Attr::eViscForce>();
 
     const size_t nPart = cloud_.size();
@@ -685,12 +687,10 @@ void SPHSolver::calcViscForces()
         {
             Neigbhor& iPartNeiI = iParticle.nei[i];
             unsigned jPart = iPartNeiI.ID;
-            //std::cout<<" "<<jPart;
             if (iPart==jPart) continue;
-            LesserParticle& jParticle = cloud_[jPart];
 
             Fv+= particleMass[jPart]
-               *jParticle.ddensity
+               *particleDDens[jPart]
                *(particleVel[jPart]-iVel)
                *Kernel::visc::laplW(iPartNeiI.dist);
         }

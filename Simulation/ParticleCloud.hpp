@@ -45,7 +45,7 @@ public:
     //glm::dvec2 Ftot;
     //double mass;
     //double density;
-    double ddensity;    //1./density
+    //double ddensity;    //1./density
     double densityErr;
     double pressure;
     std::vector<Neigbhor> nei; //list of neighbours
@@ -62,7 +62,7 @@ public:
     //Ftot(0.0),
     //mass(0.0),
     //density(0.0),
-    ddensity(0.0),
+    //ddensity(0.0),
     densityErr(0.0),
     pressure(0.0),
     nei()
@@ -79,7 +79,7 @@ public:
     //Ftot       (p.Ftot),
     //mass       (p.mass),
     //density    (p.density),
-    ddensity   (p.ddensity),
+    //ddensity   (p.ddensity),
     densityErr (p.densityErr),
     pressure   (p.pressure),
     nei        (p.nei)
@@ -98,6 +98,7 @@ enum class Attr : size_t {
   eTotalForce,
   eMass,
   eDensity,
+  eDDensity,
   nAttr
 };
 
@@ -115,7 +116,7 @@ private:
     , std::vector<glm::dvec2> //Ftot
     , std::vector<double    > //mass
     , std::vector<double    > //density
-    //, std::vector<double>     //ddensity
+    , std::vector<double>     //ddensity
     //, std::vector<double>     //densityErr
     //, std::vector<double>     //pressure
     //, std::vector<std::vector<Neigbhor>> // list of neighbours
@@ -173,6 +174,7 @@ public:
       get<Attr::eTotalForce>().push_back(p.Ftot);
       get<Attr::eMass>().push_back(p.mass);
       get<Attr::eDensity>().push_back(p.density);
+      get<Attr::eDDensity>().push_back(p.ddensity);
     }
     
     Particle particle(size_t i) const
@@ -188,7 +190,7 @@ public:
         get<Attr::eTotalForce >()[i],
         get<Attr::eMass       >()[i],
         get<Attr::eDensity    >()[i],
-        _cloud[i].ddensity,
+        get<Attr::eDDensity   >()[i],
         _cloud[i].densityErr,
         _cloud[i].pressure,
         _cloud[i].nei
