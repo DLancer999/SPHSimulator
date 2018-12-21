@@ -48,10 +48,10 @@ public:
     //double ddensity;    //1./density
     //double densityErr;
     //double pressure;
-    std::vector<Neigbhor> nei; //list of neighbours
+    //std::vector<Neigbhor> nei; //list of neighbours
 
 public:
-    LesserParticle():
+    LesserParticle()
     //position(-100.0),
     //velocity(0.0),
     //normal(0.0),
@@ -65,10 +65,10 @@ public:
     //ddensity(0.0),
     //densityErr(0.0),
     //pressure(0.0),
-    nei()
+    //nei()
     {}
 
-    LesserParticle(const Particle& p):
+    LesserParticle(const Particle&)
     //position   (p.position),
     //velocity   (p.velocity),
     //normal     (p.normal),
@@ -82,7 +82,7 @@ public:
     //ddensity   (p.ddensity),
     //densityErr (p.densityErr),
     //pressure   (p.pressure),
-    nei        (p.nei)
+    //nei        (p.nei)
     {}
 };
 
@@ -101,6 +101,7 @@ enum class Attr : size_t {
   eDDensity,
   eDensErr,
   ePressure,
+  eNei,
   nAttr
 };
 
@@ -121,7 +122,7 @@ private:
     , std::vector<double    > //ddensity
     , std::vector<double    > //densityErr
     , std::vector<double    > //pressure
-    //, std::vector<std::vector<Neigbhor>> // list of neighbours
+    , std::vector<std::vector<Neigbhor>> // list of neighbours
     >;
     static constexpr size_t nAttributes = std::tuple_size<DataType>::value;
 public:
@@ -179,6 +180,7 @@ public:
       get<Attr::eDDensity>().push_back(p.ddensity);
       get<Attr::eDensErr>().push_back(p.densityErr);
       get<Attr::ePressure>().push_back(p.pressure);
+      get<Attr::eNei>().push_back(p.nei);
     }
     
     Particle particle(size_t i) const
@@ -197,7 +199,7 @@ public:
         get<Attr::eDDensity   >()[i],
         get<Attr::eDensErr    >()[i],
         get<Attr::ePressure   >()[i],
-        _cloud[i].nei
+        get<Attr::eNei        >()[i],
       };
     }
 

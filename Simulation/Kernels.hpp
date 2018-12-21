@@ -37,21 +37,21 @@ namespace Kernel
         static double dh6; //1./(pow(h,6))
         static double dh8; //1./(pow(h,8))
 
-        static void setSmoothingLength(const double);
+        static void setSmoothingLength(double);
     };
 
     namespace poly6
     {
-        double         W(double mag_rij);
-        double         W_coeff();
-        glm::dvec2 gradW(glm::dvec2& rij, double mag_rij);
+        double     W(double mag_rij);
+        double     W_coeff();
+        glm::dvec2 gradW(const glm::dvec2& rij, double mag_rij);
         double     gradW_coeff();
-        double     laplW(glm::dvec2& xi, glm::dvec2& xj);
+        double     laplW(const glm::dvec2& xi, glm::dvec2& xj);
         double     laplW_coeff();
     }
     namespace spiky
     {
-        glm::dvec2 gradW(glm::dvec2& rij, double mag_rij);
+        glm::dvec2 gradW(const glm::dvec2& rij, double mag_rij);
         double     gradW_coeff();
     }
     namespace visc
@@ -61,7 +61,7 @@ namespace Kernel
     }
     namespace surface
     {
-        double C(const double& r);
+        double C(double r);
         double C_coeff();
     }
 }

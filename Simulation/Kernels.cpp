@@ -24,7 +24,7 @@ double Kernel::SmoothingLength::dh8 = 0.;
 //to be initialized by setSmoothingLength() call
 
 //********************************************************************************
-void Kernel::SmoothingLength::setSmoothingLength(const double smoothingLength)
+void Kernel::SmoothingLength::setSmoothingLength(double smoothingLength)
 //********************************************************************************
 {
     h   = smoothingLength;
@@ -59,7 +59,7 @@ double Kernel::poly6::W_coeff()
 }
 
 //********************************************************************************
-glm::dvec2 Kernel::poly6::gradW(glm::dvec2& rij, double mag_rij)
+glm::dvec2 Kernel::poly6::gradW(const glm::dvec2& rij, double mag_rij)
 //********************************************************************************
 {
     double mag2 = mag_rij*mag_rij;
@@ -81,7 +81,7 @@ double Kernel::poly6::gradW_coeff()
 }
 
 //********************************************************************************
-double Kernel::poly6::laplW(glm::dvec2& xi, glm::dvec2& xj)
+double Kernel::poly6::laplW(const glm::dvec2& xi, glm::dvec2& xj)
 //********************************************************************************
 {
     glm::dvec2 rij = xi - xj;
@@ -103,7 +103,7 @@ double Kernel::poly6::laplW_coeff()
 }
 
 //********************************************************************************
-glm::dvec2 Kernel::spiky::gradW(glm::dvec2& rij, double mag_rij)
+glm::dvec2 Kernel::spiky::gradW(const glm::dvec2& rij, double mag_rij)
 //********************************************************************************
 {
     double q = mag_rij*SmoothingLength::dh;
@@ -140,7 +140,7 @@ double Kernel::visc::laplW_coeff()
 }
 
 //********************************************************************************
-double Kernel::surface::C(const double& r)
+double Kernel::surface::C(double r)
 //********************************************************************************
 {
     double q = r*SmoothingLength::dh;
