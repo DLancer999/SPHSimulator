@@ -439,11 +439,12 @@ void SPHSolver::calcDensityErr()
 void SPHSolver::initPressure()
 //********************************************************************************
 {
+    auto& particlePress = cloud_.get<Attr::ePressure>();
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        cloud_[iPart].pressure = 0.0;
+        particlePress[iPart] = 0.0;
     }
 }
 
@@ -455,14 +456,14 @@ void SPHSolver::calcPressure()
     Statistics::TimerGuard pressGuard(pressCalcTimerID);
 
     const auto& particleDens = cloud_.get<Attr::eDensity>();
+    auto& particlePress = cloud_.get<Attr::ePressure>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        auto& particle = cloud_[iPart];
         //p = k(rho-rho0)
-        particle.pressure = fmax(SPHSettings::stiffness*(particleDens[iPart] -SPHSettings::particleDensity),0.0);
+        particlePress[iPart] = fmax(SPHSettings::stiffness*(particleDens[iPart] -SPHSettings::particleDensity),0.0);
     }
 }
 
@@ -507,13 +508,13 @@ void SPHSolver::updatePressure()
     Statistics::TimerGuard updatePressGuard(updatePressTimerID);
 
     const auto& particleDensErr = cloud_.get<Attr::eDensErr>();
+    auto& particlePress = cloud_.get<Attr::ePressure>();
 
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        auto& particle = cloud_[iPart];
-        particle.pressure = fmax(delta_*particleDensErr[iPart],0.0);
+        particlePress[iPart] = fmax(delta_*particleDensErr[iPart],0.0);
       //cloud_[iPart].pressure = delta_*cloud_[iPart].densityErr;
     }
 }
@@ -630,6 +631,7 @@ void SPHSolver::calcPressForces()
 
     const auto& particleMass  = cloud_.get<Attr::eMass>();
     const auto& particleDDens = cloud_.get<Attr::eDDensity>();
+    const auto& particlePress = cloud_.get<Attr::ePressure>();
     auto& particleFPress = cloud_.get<Attr::ePressForce>();
 
     const size_t nPart = cloud_.size();
@@ -639,6 +641,7 @@ void SPHSolver::calcPressForces()
         LesserParticle& iParticle = cloud_[iPart];
 
         glm::dvec2 Fp = glm::dvec2(0.0);
+        const double iPress = particlePress[iPart];
 
         const unsigned Nnei = unsigned(iParticle.nei.size());
         for (unsigned i = 0; i<Nnei;i++)
@@ -646,10 +649,9 @@ void SPHSolver::calcPressForces()
             Neigbhor& iPartNeiI = iParticle.nei[i];
             unsigned jPart = iPartNeiI.ID;
             if (iPart==jPart) continue;
-            LesserParticle& jParticle = cloud_[jPart];
 
             Fp+=particleMass[jPart]*particleDDens[jPart]
-               *(iParticle.pressure + jParticle.pressure)
+               *(iPress + particlePress[jPart])
                *Kernel::spiky::gradW(iPartNeiI.dir,iPartNeiI.dist);
         }
 
