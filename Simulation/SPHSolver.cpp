@@ -440,7 +440,10 @@ void SPHSolver::initPressure()
 //********************************************************************************
 {
     auto& particlePress = cloud_.get<Attr::ePressure>();
-    std::fill(particlePress.begin(), particlePress.end(), 0.0);
+    const size_t nPart = particlePress.size();
+    #pragma omp parallel for
+    for (size_t iPart = 0; iPart<nPart; ++iPart) 
+      particlePress[iPart]=0.0;
 }
 
 //********************************************************************************
