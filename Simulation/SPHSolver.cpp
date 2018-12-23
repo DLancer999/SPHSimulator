@@ -71,15 +71,15 @@ void SPHSolver::init()
             {
                 if (cloud_.size()>=SPHSettings::NParticles) break;
                 Particle p;
-                p.position = glm::dvec2
+                p.get<Attr::ePosition>() = glm::dvec2
                 (
                     InitialConditions::particleInitPos.x+(SPHSettings::initDx*(double(j)+0.5)),
                     InitialConditions::particleInitPos.y+SPHSettings::initDx*(double(i)+0.5)
                 ); 
-                p.velocity = InitialConditions::particleInitVel; 
-                p.density  = SPHSettings::particleDensity;
-                p.ddensity = SPHSettings::dParticleDensity;
-                p.mass     = SPHSettings::particleMass;
+                p.get<Attr::eVelocity>() = InitialConditions::particleInitVel; 
+                p.get<Attr::eDensErr>()  = SPHSettings::particleDensity;
+                p.get<Attr::eDDensity>() = SPHSettings::dParticleDensity;
+                p.get<Attr::eMass>()     = SPHSettings::particleMass;
                 nPart++;
                 cloud_.push_back(p);
             }
@@ -306,9 +306,9 @@ void SPHSolver::generateParticles()
                     {
                         if (cloud_.size()>=SPHSettings::NParticles) break;
                         Particle active;
-                        active.position = InitialConditions::particleInitPos + i*SPHSettings::initDx*generationDirection;
-                        active.velocity = InitialConditions::particleInitVel;
-                        active.mass     = SPHSettings::particleMass;
+                        active.get<Attr::ePosition>() = InitialConditions::particleInitPos + i*SPHSettings::initDx*generationDirection;
+                        active.get<Attr::eVelocity>() = InitialConditions::particleInitVel;
+                        active.get<Attr::eMass>()     = SPHSettings::particleMass;
                         cloud_.push_back(active);
                     }
                 }
@@ -337,9 +337,9 @@ void SPHSolver::generateParticles()
                             double dist = glm::length(pos-center);
                             if (dist>radius) continue;
                             Particle active;
-                            active.position = pos;
-                            active.velocity = InitialConditions::particleInitVel;
-                            active.mass     = SPHSettings::particleMass;
+                            active.get<Attr::ePosition>() = pos;
+                            active.get<Attr::eVelocity>() = InitialConditions::particleInitVel;
+                            active.get<Attr::eMass    >() = SPHSettings::particleMass;
                             cloud_.push_back(active);
                         }
                     }

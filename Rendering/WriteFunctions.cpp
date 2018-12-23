@@ -42,17 +42,17 @@ void writeRAWfile(std::string fileName, const ParticleCloud& cloud)
         Particle iParticle = cloud.particle(i);
         outfile<<std::scientific;
         outfile<<i<<"\t"                    
-               <<iParticle.position.x<<"\t" 
-               <<iParticle.position.y<<"\t" 
-               <<iParticle.velocity.x<<"\t" 
-               <<iParticle.velocity.y<<"\t" 
-               <<iParticle.density<<"\t"    
-               <<iParticle.Fpress.x<<"\t"          
-               <<iParticle.Fpress.y<<"\t"          
-               <<iParticle.Fvisc.x<<"\t"           
-               <<iParticle.Fvisc.y<<"\t"           
-               <<iParticle.Fother.x<<"\t"          
-               <<iParticle.Fother.y<<"\t"          
+               <<iParticle.get<Attr::ePosition>().x<<"\t" 
+               <<iParticle.get<Attr::ePosition>().y<<"\t" 
+               <<iParticle.get<Attr::eVelocity>().x<<"\t" 
+               <<iParticle.get<Attr::eVelocity>().y<<"\t" 
+               <<iParticle.get<Attr::eDensity>()<<"\t" 
+               <<iParticle.get<Attr::ePressForce>().x<<"\t" 
+               <<iParticle.get<Attr::ePressForce>().y<<"\t" 
+               <<iParticle.get<Attr::eViscForce>().x<<"\t" 
+               <<iParticle.get<Attr::eViscForce>().y<<"\t" 
+               <<iParticle.get<Attr::eOtherForce>().x<<"\t" 
+               <<iParticle.get<Attr::eOtherForce>().y<<"\t" 
                <<"\n";                   
     }
     outfile.close();

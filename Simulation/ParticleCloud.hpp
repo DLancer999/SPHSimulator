@@ -19,6 +19,7 @@ Class
 #include <vector>
 #include <tuple>
 
+#include "ParticleAttributes.hpp"
 #include "Particle.hpp"
 
 namespace detail {
@@ -27,120 +28,84 @@ namespace detail {
   {
     (f(std::get<Is>(t)),...);
   }
+
+  template <typename ParticleVectorData>
+  class ParticleCloudT
+  {
+  private:
+      static constexpr size_t nAttributes = std::tuple_size<ParticleVectorData>::value;
+  public:
+
+      ParticleCloudT(): _data() {}
+      ParticleCloudT(const ParticleCloudT&) = default;
+      ParticleCloudT(ParticleCloudT&&)      = default;
+
+      ~ParticleCloudT() = default;
+
+      ParticleCloudT& operator=(const ParticleCloudT&) = default;
+      ParticleCloudT& operator=(ParticleCloudT&&)      = default;
+
+      template <Attr attr>
+      decltype(auto) get() { return std::get<static_cast<size_t>(attr)>(_data); }
+      template <Attr attr>
+      decltype(auto) get() const { return std::get<static_cast<size_t>(attr)>(_data); }
+
+      void reserve(size_t s) {
+        auto reserveFunctor = [s](auto& v){ v.reserve(s); };
+        applyFunctor(reserveFunctor);
+      }
+
+      void push_back(const Particle& p) {
+        push_back_impl<0>(p);
+      }
+
+      decltype(auto) particle(size_t i) const {
+        return particle_impl( i,
+          std::make_index_sequence<static_cast<size_t>(nAttributes)>()
+        );
+      }
+
+      size_t size() const { return get<Attr::ePosition>().size(); }
+
+      bool empty() const { return get<Attr::ePosition>().empty(); }
+
+      template <class Functor>
+      void applyFunctor(const Functor& f) {
+        detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
+      }
+      template <class Functor>
+      void applyFunctor(const Functor& f) const {
+        detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
+      }
+
+  private:
+      ParticleVectorData _data; 
+
+      template <size_t ... Is>
+      decltype(auto) particle_impl(size_t i, std::index_sequence<Is...>) const
+      {
+        using RetType = decltype(
+          AttrUtil::fromVectorTypeToSimpleType<ParticleVectorData>()
+        );
+        return RetType { std::make_tuple( get<static_cast<Attr>(Is)>()[i]...)};
+      }
+
+      template <size_t Is>
+      void push_back_impl(const Particle& p) {
+        if constexpr ( Is < nAttributes ) {
+          get<static_cast<Attr>(Is)>().push_back(p.get<static_cast<Attr>(Is)>());
+          push_back_impl<Is+1>(p);
+        }
+      }
+
+  };
 }
 
-//order must be in aggrement with data tuple
-enum class Attr : size_t {
-  ePosition = 0,
-  eVelocity,
-  eNormal,
-  ePressForce,
-  eViscForce,
-  eSurfForce,
-  eOtherForce,
-  eTotalForce,
-  eMass,
-  eDensity,
-  eDDensity,
-  eDensErr,
-  ePressure,
-  eNei,
-  nAttr
-};
-
-class ParticleCloud
-{
-private:
-    using DataType = std::tuple<
-      std::vector<glm::dvec2> //position
-    , std::vector<glm::dvec2> //velocity
-    , std::vector<glm::dvec2> //normal
-    , std::vector<glm::dvec2> //Fpress
-    , std::vector<glm::dvec2> //Fvisc
-    , std::vector<glm::dvec2> //Fsurf
-    , std::vector<glm::dvec2> //Fother
-    , std::vector<glm::dvec2> //Ftot
-    , std::vector<double    > //mass
-    , std::vector<double    > //density
-    , std::vector<double    > //ddensity
-    , std::vector<double    > //densityErr
-    , std::vector<double    > //pressure
-    , std::vector<std::vector<Neigbhor>> // list of neighbours
-    >;
-    static constexpr size_t nAttributes = std::tuple_size<DataType>::value;
-public:
-
-    ParticleCloud(): _data() {}
-    ParticleCloud(const ParticleCloud&) = default;
-    ParticleCloud(ParticleCloud&&)      = default;
-
-    ~ParticleCloud() = default;
-
-    ParticleCloud& operator=(const ParticleCloud&) = default;
-    ParticleCloud& operator=(ParticleCloud&&)      = default;
-
-    template <Attr attr>
-    decltype(auto) get() { return std::get<static_cast<size_t>(attr)>(_data); }
-    template <Attr attr>
-    decltype(auto) get() const { return std::get<static_cast<size_t>(attr)>(_data); }
-
-    void reserve(size_t s) {
-      auto reserveFunctor = [s](auto& v){ v.reserve(s); };
-      applyFunctor(reserveFunctor);
-    }
-
-    void push_back(const Particle& p) {
-      get<Attr::ePosition>().push_back(p.position);
-      get<Attr::eVelocity>().push_back(p.velocity);
-      get<Attr::eNormal>().push_back(p.normal);
-      get<Attr::ePressForce>().push_back(p.Fpress);
-      get<Attr::eViscForce>().push_back(p.Fvisc);
-      get<Attr::eSurfForce>().push_back(p.Fvisc);
-      get<Attr::eOtherForce>().push_back(p.Fother);
-      get<Attr::eTotalForce>().push_back(p.Ftot);
-      get<Attr::eMass>().push_back(p.mass);
-      get<Attr::eDensity>().push_back(p.density);
-      get<Attr::eDDensity>().push_back(p.ddensity);
-      get<Attr::eDensErr>().push_back(p.densityErr);
-      get<Attr::ePressure>().push_back(p.pressure);
-      get<Attr::eNei>().push_back(p.nei);
-    }
-    
-    Particle particle(size_t i) const
-    {
-      return Particle {
-        get<Attr::ePosition   >()[i],
-        get<Attr::eVelocity   >()[i],
-        get<Attr::eNormal     >()[i],
-        get<Attr::ePressForce >()[i],
-        get<Attr::eViscForce  >()[i],
-        get<Attr::eSurfForce  >()[i],
-        get<Attr::eOtherForce >()[i],
-        get<Attr::eTotalForce >()[i],
-        get<Attr::eMass       >()[i],
-        get<Attr::eDensity    >()[i],
-        get<Attr::eDDensity   >()[i],
-        get<Attr::eDensErr    >()[i],
-        get<Attr::ePressure   >()[i],
-        get<Attr::eNei        >()[i],
-      };
-    }
-
-    size_t size() const { return get<Attr::ePosition>().size(); }
-
-    bool empty() const { return get<Attr::ePosition>().empty(); }
-
-    template <class Functor>
-    void applyFunctor(const Functor& f) {
-      detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
-    }
-    template <class Functor>
-    void applyFunctor(const Functor& f) const {
-      detail::applyOnTuple(_data, f, std::make_index_sequence<nAttributes>());
-    }
-
-private:
-    DataType _data; 
-};
+//TODO:: current implementation only works for this definitions of ParticleCloud and Particle.
+//However, in theory we should be able to have Particle/ParticleCloud instances that support a different
+//subset of the attributes. Current implementation hints at this possibility, but we are not there yet.
+using ParticleCloud = detail::ParticleCloudT<decltype(
+    AttrUtil::expandToVectorType(std::make_index_sequence<size_t(Attr::nAttr)>())
+)>;
 
 #endif

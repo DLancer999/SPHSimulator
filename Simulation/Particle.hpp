@@ -23,46 +23,43 @@ SourceFiles
 #define PARTICLE_H
 
 #include <glm/glm.hpp>
-#include <vector>
+#include <type_traits>
+#include <utility>
 
-class Neigbhor
+#include "ParticleAttributes.hpp"
+
+namespace detail
 {
-public:
-    glm::dvec2 dir;
-    double     dist;
-    unsigned   ID;
-
-public:
-    Neigbhor():
-    dir(0.0),
-    dist(0.0),
-    ID(0)
+  //template <size_t ... DataIndexes>
+  template <typename DataType>
+  class ParticleT
+  {
+  public:
+    ParticleT():_data{}{}
+    ParticleT(const ParticleT&) = default;
+    ParticleT(ParticleT&&)      = default;
+    ParticleT(const DataType& data)
+    :_data{data}
+    {}
+    ParticleT(DataType&& data)
+    :_data{std::move(data)}
     {}
 
-    Neigbhor(const unsigned neiID):
-    dir(0.0),
-    dist(0.0),
-    ID(neiID)
-    {}
-};
+    ~ParticleT() = default;
+    ParticleT& operator=(const ParticleT&) = default;
+    ParticleT& operator=(ParticleT&&     ) = default;
 
-class Particle
-{
-public:
-    glm::dvec2 position = glm::dvec2(-100.0);
-    glm::dvec2 velocity = glm::dvec2(0.0);
-    glm::dvec2 normal   = glm::dvec2(0.0);
-    glm::dvec2 Fpress   = glm::dvec2(0.0);
-    glm::dvec2 Fvisc    = glm::dvec2(0.0);
-    glm::dvec2 Fsurf    = glm::dvec2(0.0);
-    glm::dvec2 Fother   = glm::dvec2(0.0);
-    glm::dvec2 Ftot     = glm::dvec2(0.0);
-    double mass       = 0.0;
-    double density    = 0.0;
-    double ddensity   = 0.0;
-    double densityErr = 0.0;
-    double pressure   = 0.0;
-    std::vector<Neigbhor> nei = std::vector<Neigbhor>();
-};
+    template <Attr attr>
+    decltype(auto) get() { return std::get<static_cast<size_t>(attr)>(_data); }
+    template <Attr attr>
+    decltype(auto) get() const { return std::get<static_cast<size_t>(attr)>(_data); }
+  private:
+    DataType _data;
+  };
+}
+
+using Particle = detail::ParticleT<decltype(
+    AttrUtil::expandToType(std::make_index_sequence<size_t(Attr::nAttr)>())
+)>;
 
 #endif
