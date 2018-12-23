@@ -163,6 +163,7 @@ void SPHSolver::PCISPHStep()
     calcSurfForces();
     calcOtherForces();
 
+    const size_t nPart = cloud_.size();
     {
         static auto updatePosTimerID  = Statistics::createTimer("SPHSolver::PCISPH::updatePosTimer");
         Statistics::TimerGuard g(updatePosTimerID);
@@ -173,7 +174,6 @@ void SPHSolver::PCISPHStep()
 
         auto& particleFTotal = cloud_.get<Attr::eTotalForce>();
 
-        const size_t nPart = cloud_.size();
         #pragma omp parallel for
         for (size_t iPart = 0; iPart<nPart; ++iPart) 
         {
@@ -211,14 +211,16 @@ void SPHSolver::PCISPHStep()
 
             calcPressForces();
 
-            for (size_t iPart = 0, nPart = cloud_.size(); iPart<nPart; ++iPart) 
+            const double dt = SimulationSettings::dt;
+            #pragma omp parallel for
+            for (size_t iPart = 0; iPart<nPart; ++iPart) 
             {
                 const glm::dvec2 iPress = particleFPress[iPart];
                 particleFTot[iPart] += iPress;
 
-                glm::dvec2 update = SimulationSettings::dt*particleDDens[iPart]*iPress;
+                glm::dvec2 update = dt*particleDDens[iPart]*iPress;
                 particleVel[iPart] += update;
-                particlePos[iPart] += SimulationSettings::dt*update;
+                particlePos[iPart] += dt*update;
             }
         }
     }
