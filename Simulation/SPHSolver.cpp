@@ -362,21 +362,18 @@ void SPHSolver::updateNei()
     const auto& particlePos = cloud_.get<Attr::ePosition>();
     auto& particleNei = cloud_.get<Attr::eNei>();
 
-    const size_t nPart = cloud_.size();
+    auto particleRange = boost::combine(particlePos, particleNei);
+
+    const auto end = std::end(particleRange);
     #pragma omp parallel for
-    for (size_t iPart = 0; iPart<nPart; ++iPart) 
+    for (auto it = std::begin(particleRange); it < end; ++it) 
     {
-        auto& iNei = particleNei[iPart];
-        unsigned Nnei = unsigned(iNei.size());
-        for (unsigned i = 0; i<Nnei;i++)
+        const glm::dvec2 iPos = it->get<0>();
+        for ( Neigbhor& iPartNeiI :  it->get<1>() )
         {
-            Neigbhor& iPartNeiI = iNei[i];
-            unsigned jPart = iPartNeiI.ID;
-            if (iPart!=jPart)
-            {
-                iPartNeiI.dir  = particlePos[iPart]-particlePos[jPart];
-                iPartNeiI.dist = glm::length(iPartNeiI.dir);
-            }
+            const glm::dvec2 dir = iPos-particlePos[iPartNeiI.ID];
+            iPartNeiI.dir  = dir;
+            iPartNeiI.dist = glm::length(dir);
         }
     }
 }
