@@ -22,6 +22,7 @@ License
 #include "Statistics/Statistics.hpp"
 
 #include <boost/range/combine.hpp>
+#include <boost/range/algorithm/for_each.hpp>
 
 //********************************************************************************
 void SPHSolver::init()
@@ -231,18 +232,12 @@ bool SPHSolver::step()
     iReorder++;
 
     auto& particleNei = cloud_.get<Attr::eNei>();
+    boost::for_each(particleNei, [](auto& v){ v.clear();});
 
-    const size_t nPart = cloud_.size();
-    #pragma omp parallel for
-    for (size_t iPart = 0; iPart<nPart; ++iPart) 
-    {
-        if(particleNei[iPart].size())
-            particleNei[iPart].clear();
-    }
-
-    if(iReorder%100==0)
+    if(iReorder == 100)
     {
         Reorderer::reorderCloud(cloud_);
+        iReorder = 0;
     }
 
     generateParticles();

@@ -81,14 +81,11 @@ void HashTable::write() const
 void HashTable::clear()
 //********************************************************************************
 {
-    #pragma omp parallel for
     for (unsigned i=0;i<gridSize_.x;i++)
     {
-        #pragma omp parallel for
         for (unsigned j=0;j<gridSize_.y;j++)
         {
-            if(particlesIn_(i,j).size())
-                particlesIn_(i,j).clear();
+            particlesIn_(i,j).clear();
         }
     }
 }
@@ -116,6 +113,9 @@ void HashTable::findNei(ParticleCloud& cloud)
 {
     static auto findNeiTimerID = Statistics::createTimer("HashTable::findNei");
     Statistics::TimerGuard findNeiTimerGuard(findNeiTimerID);
+    //static auto findNeiTimerID_1 = Statistics::createTimer("HashTable::findNei_P1");
+    //static auto findNeiTimerID_2 = Statistics::createTimer("HashTable::findNei_P2");
+    //static auto findNeiTimerID_3 = Statistics::createTimer("HashTable::findNei_P3");
 
     const auto& particlePos = cloud.get<Attr::ePosition>();
 
@@ -123,64 +123,73 @@ void HashTable::findNei(ParticleCloud& cloud)
 
     std::vector<glm::ivec2> particleGridPos(particlePos.size(), glm::ivec2(0));
 
-    //find grid position of each particle
     const size_t nPart = cloud.size();
-    for (size_t iPart=0; iPart<nPart; ++iPart)
-    {
-        glm::dvec2 pos = particlePos[iPart];
-        glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
-        glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
-        while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-        while (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-        while (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-        while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
-        particlesIn_(gridPos.x,gridPos.y).push_back(unsigned(iPart));
-        particleGridPos[iPart] = gridPos;
+    {
+        //Statistics::TimerGuard findNeiTimerGuard_1(findNeiTimerID_1);
+        const double dh = Kernel::SmoothingLength::dh;
+        //find grid position of each particle
+        for (size_t iPart=0; iPart<nPart; ++iPart)
+        {
+            const glm::dvec2 pos = particlePos[iPart];
+            const glm::dvec2 dgrdPos = (pos-minPos_)*dh;
+            glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
+            if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+            else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+            if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+            else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
+
+            particlesIn_(gridPos.x,gridPos.y).push_back(unsigned(iPart));
+            particleGridPos[iPart] = gridPos;
+        }
     }
 
-    //find nei of each particle
-    #pragma omp parallel for
-    for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-        const glm::dvec2 iPos = particlePos[iPart];
-        const glm::ivec2 iGridPos = particleGridPos[iPart];
-        auto& iNei = particleNei[iPart];
-
-        for (int iGrid=-1;iGrid<2;iGrid++)
+        //Statistics::TimerGuard findNeiTimerGuard_2(findNeiTimerID_2);
+        const double h2 = Kernel::SmoothingLength::h2;
+        //find nei of each particle
+        #pragma omp parallel for
+        for (size_t iPart=0; iPart<nPart; ++iPart)
         {
-            for (int jGrid=-1;jGrid<2;jGrid++)
+            const glm::dvec2 iPos = particlePos[iPart];
+            const glm::ivec2 iGridPos = particleGridPos[iPart];
+            auto& iNei = particleNei[iPart];
+
+            for (int iGrid=-1;iGrid<2;iGrid++)
             {
-                glm::ivec2 gridPos = iGridPos + glm::ivec2(iGrid,jGrid);
-
-                if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-                else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-                if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-                else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
-
-                const size_t nNei = particlesIn_(gridPos.x,gridPos.y).size();
-                for (size_t neiID=0;neiID<nNei;neiID++)
+                for (int jGrid=-1;jGrid<2;jGrid++)
                 {
-                    const unsigned neiPos = particlesIn_(gridPos.x,gridPos.y)[neiID];
-                    const double dist2 = glm::length2(iPos - particlePos[neiPos]);
-                    if (dist2 < Kernel::SmoothingLength::h2)
-                    {
-                        iNei.push_back(Neigbhor(neiPos));
+                    glm::ivec2 gridPos = iGridPos + glm::ivec2(iGrid,jGrid);
+
+                    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
+                    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
+                    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
+                    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
+
+                    for ( unsigned neiPos : particlesIn_(gridPos.x,gridPos.y) ) {
+                        const double dist2 = glm::length2(iPos - particlePos[neiPos]);
+                        if (dist2 < h2)
+                        {
+                            iNei.push_back(Neigbhor(neiPos));
+                        }
                     }
                 }
             }
         }
     }
 
-    auto comp = [&particlePos](const Neigbhor& i, const Neigbhor& j){
-      return particlePos[i.ID].x < particlePos[j.ID].x;
-    };
-
-    #pragma omp parallel for
-    for (size_t iPart=0; iPart<nPart; ++iPart)
     {
-      auto& nei = particleNei[iPart];
-      std::sort(nei.begin(), nei.end(), comp);
+        //Statistics::TimerGuard findNeiTimerGuard_3(findNeiTimerID_3);
+        auto comp = [&particlePos](const Neigbhor& i, const Neigbhor& j){
+          return particlePos[i.ID].x < particlePos[j.ID].x;
+        };
+
+        #pragma omp parallel for
+        for (size_t iPart=0; iPart<nPart; ++iPart)
+        {
+          auto& nei = particleNei[iPart];
+          std::sort(nei.begin(), nei.end(), comp);
+        }
     }
 }
 
