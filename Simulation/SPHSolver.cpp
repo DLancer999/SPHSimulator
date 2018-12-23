@@ -391,6 +391,8 @@ void SPHSolver::calcDensity()
     auto& particleDens  = cloud_.get<Attr::eDensity>();
     auto& particleDDens = cloud_.get<Attr::eDDensity>();
 
+    const double Wcoeff = Kernel::poly6::W_coeff();
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
@@ -406,7 +408,7 @@ void SPHSolver::calcDensity()
 
             dens += particleMass[jPart]*Kernel::poly6::W(iNei[i].dist);
         }
-        dens*=Kernel::poly6::W_coeff();
+        dens*=Wcoeff;
 
         particleDens[iPart]  = dens;
         particleDDens[iPart] = 1./dens;
@@ -423,11 +425,13 @@ void SPHSolver::calcDensityErr()
     const auto& particleDens = cloud_.get<Attr::eDensity>();
     auto& particleDensErr = cloud_.get<Attr::eDensErr>();
 
+    const double pDens = SPHSettings::particleDensity;
+
     const size_t nPart = cloud_.size();
     #pragma omp parallel for
     for (size_t iPart = 0; iPart<nPart; ++iPart) 
     {
-        particleDensErr[iPart] = particleDens[iPart] - SPHSettings::particleDensity;
+        particleDensErr[iPart] = particleDens[iPart] - pDens;
     }
 }
 
@@ -436,12 +440,7 @@ void SPHSolver::initPressure()
 //********************************************************************************
 {
     auto& particlePress = cloud_.get<Attr::ePressure>();
-    const size_t nPart = cloud_.size();
-    #pragma omp parallel for
-    for (size_t iPart = 0; iPart<nPart; ++iPart) 
-    {
-        particlePress[iPart] = 0.0;
-    }
+    std::fill(particlePress.begin(), particlePress.end(), 0.0);
 }
 
 //********************************************************************************
