@@ -14,6 +14,7 @@ Description
 
 \************************************************************************/
 #include <iostream>            
+#include <fstream>            
 
 #include "Simulation/Kernels.hpp"        
 #include "Simulation/SPHSolver.hpp"      
