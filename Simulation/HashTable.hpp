@@ -55,12 +55,12 @@ public:
 
     void clear();
 
-    glm::ivec2 findGridPos(glm::dvec2 pos) const;
+    glm::uvec2 findGridPos(glm::dvec2 pos) const;
 
     void findNei(ParticleCloud& cloud);
 
     //return particleList of particles around grid cell
-    std::vector<unsigned> neiParticlesFor(glm::ivec2 gridPos) const;
+    std::vector<unsigned> neiParticlesFor(glm::uvec2 gridPos) const;
 };
 
 #endif

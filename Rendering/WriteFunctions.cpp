@@ -153,7 +153,7 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
     std::vector<glm::vec3> pixelColor(RenderSettings::width*RenderSettings::height);
 
     glm::dvec2 pos(0.0);
-    glm::ivec2 gridPos(0);
+    glm::uvec2 gridPos(0);
     double potential = 0.;
     double potentialThres = 1./(0.4*SPHSettings::initDx*SPHSettings::initDx);
     glm::dvec2 vel(0.0);
@@ -222,33 +222,26 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
 
                 pos.x   = BoundaryConditions::bndBox.minX()+double(i)*denomWIDTH*(BoundaryConditions::bndBox.dx());
                 gridPos =  neibhs.findGridPos(pos);
-                for (int iNei=-1;iNei<=1;iNei++)
+                std::vector<unsigned> neiParts = neibhs.neiParticlesFor(gridPos);
+                const unsigned nNei = unsigned(neiParts.size());
+                for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                 {
-                    for (int jNei=-1;jNei<=1;jNei++)
+                    const unsigned nei = neiParts[neiPart];
+                    double dist = glm::length(pos-particlePos[nei]);
+                    if (dist<SPHSettings::initDx*0.4) inFluid=true;
+                    if (inFluid) 
                     {
-                        const std::vector<unsigned>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
-                        const unsigned nNei = unsigned(neiParts.size());
-                        for (unsigned neiPart=0;neiPart<nNei;neiPart++)
-                        {
-                            const unsigned nei = neiParts[neiPart];
-                            double dist = glm::length(pos-particlePos[nei]);
-                            if (dist<SPHSettings::initDx*0.4) inFluid=true;
-                            if (inFluid) 
-                            {
-                                float velMag = float(glm::length(particleVel[nei]));
-                                float scale = 0.2f;
-                                pixelColor[iNode] = glm::vec3(
-                                                scale*velMag,
-                                                scale*velMag, 
-                                                scale*velMag*0.3f+0.7
-                                                );
-                                break;
-                            }
-                        }
-                        if (inFluid) break;
+                        float velMag = float(glm::length(particleVel[nei]));
+                        float scale = 0.2f;
+                        pixelColor[iNode] = glm::vec3(
+                                        scale*velMag,
+                                        scale*velMag, 
+                                        scale*velMag*0.3f+0.7
+                                        );
+                        break;
                     }
-                    if (inFluid) break;
                 }
+                if (inFluid) break;
             }
         }
     }
