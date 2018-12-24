@@ -20,5 +20,6 @@ performanceTests/Faucet/performance.txt
 performanceTests/Faucet/results.txt
 performanceTests/performanceLogs
 performanceTests/Faucet/fastCheck
+performanceTests/Faucet/baseline*.txt
 
 \.ycm_extra_conf\.py
