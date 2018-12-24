@@ -36,12 +36,14 @@ class HashTable
 
 private:
     Util::Matrix<std::vector<unsigned>> particlesIn_;
+    std::vector<glm::uvec2> particleGridPos_;
     glm::dvec2 minPos_;
     glm::uvec2 gridSize_;
 
 public:
     HashTable():
     particlesIn_(),
+    particleGridPos_(),
     minPos_(0.0),
     gridSize_(0,0)
     {

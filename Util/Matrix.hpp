@@ -66,6 +66,18 @@ public:
     return _data[i*_sizeY + j];
   }
 
+  template <typename Vec>
+  T& operator()(const Vec& v) {
+    return this->operator()(v.x, v.y);
+  }
+
+  template <typename Vec>
+  const T& operator()(const Vec& v) const {
+    return this->operator()(v.x, v.y);
+  }
+
+
+
 private:
   std::vector<T> _data;
   size_t _sizeX;
