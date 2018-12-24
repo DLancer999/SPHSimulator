@@ -177,10 +177,8 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                 pos.x   = BoundaryConditions::bndBox.minX()+double(i)*denomWIDTH*(BoundaryConditions::bndBox.dx());
                 gridPos =  neibhs.findGridPos(pos);
                 std::vector<unsigned> neiParts = neibhs.neiParticlesFor(gridPos);
-                const unsigned nNei = unsigned(neiParts.size());
-                for (unsigned neiPart=0;neiPart<nNei;neiPart++)
+                for (unsigned nei : neiParts)
                 {
-                    const unsigned nei = neiParts[neiPart];
                     double dist = glm::length(pos-particlePos[nei]);
                     if (dist>1.e-10) 
                     {
@@ -223,10 +221,8 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
                 pos.x   = BoundaryConditions::bndBox.minX()+double(i)*denomWIDTH*(BoundaryConditions::bndBox.dx());
                 gridPos =  neibhs.findGridPos(pos);
                 std::vector<unsigned> neiParts = neibhs.neiParticlesFor(gridPos);
-                const unsigned nNei = unsigned(neiParts.size());
-                for (unsigned neiPart=0;neiPart<nNei;neiPart++)
+                for (unsigned nei : neiParts)
                 {
-                    const unsigned nei = neiParts[neiPart];
                     double dist = glm::length(pos-particlePos[nei]);
                     if (dist<SPHSettings::initDx*0.4) inFluid=true;
                     if (inFluid) 
