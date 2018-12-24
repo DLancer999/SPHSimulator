@@ -1,3 +1,4 @@
 #!/bin/bash
+cd ..
 rm -f tags types_c.taghl types_py.taghl
 
