@@ -1,4 +1,4 @@
-rm -rf build
-mkdir build
-cd build
-cmake ../ -DCMAKE_CXX_COMPILER=g++-7 -DBOOST_ROOT=/home/dlancer/Programs/boost/boostGcc
+rm -rf ../build
+mkdir ../build
+cd ../build
+cmake ../source -DCMAKE_CXX_COMPILER=g++-7 -DBOOST_ROOT=/home/dlancer/Programs/boost/boostGcc
