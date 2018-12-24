@@ -176,27 +176,19 @@ void renderImage(std::string fileName, const ParticleCloud& cloud, const HashTab
 
                 pos.x   = BoundaryConditions::bndBox.minX()+double(i)*denomWIDTH*(BoundaryConditions::bndBox.dx());
                 gridPos =  neibhs.findGridPos(pos);
-                for (int iNei=-1;iNei<=1;iNei++)
+                std::vector<unsigned> neiParts = neibhs.neiParticlesFor(gridPos);
+                const unsigned nNei = unsigned(neiParts.size());
+                for (unsigned neiPart=0;neiPart<nNei;neiPart++)
                 {
-                    for (int jNei=-1;jNei<=1;jNei++)
+                    const unsigned nei = neiParts[neiPart];
+                    double dist = glm::length(pos-particlePos[nei]);
+                    if (dist>1.e-10) 
                     {
-                        const std::vector<unsigned>& neiParts = neibhs.neiParticlesFor(gridPos+glm::ivec2(iNei,jNei));
-                        const unsigned nNei = unsigned(neiParts.size());
-                        for (unsigned neiPart=0;neiPart<nNei;neiPart++)
-                        {
-                            const unsigned nei = neiParts[neiPart];
-                            double dist = glm::length(pos-particlePos[nei]);
-                            if (dist>1.e-10) 
-                            {
-                                double potCon = 1./(dist*dist);
-                                potential+= potCon;
-                                vel += particleVel[nei]*potCon;
-                            }
-                            inFluid = (potential>=potentialThres);
-                            if (inFluid) break;
-                        }
-                        if (inFluid) break;
+                        double potCon = 1./(dist*dist);
+                        potential+= potCon;
+                        vel += particleVel[nei]*potCon;
                     }
+                    inFluid = (potential>=potentialThres);
                     if (inFluid) break;
                 }
                 if (inFluid) 

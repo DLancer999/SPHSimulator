@@ -23,6 +23,8 @@ License
 #include "Kernels.hpp"
 
 #include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/irange.hpp>
+#include <boost/range/algorithm_ext.hpp>
 
 using boost::adaptors::indexed;
 
@@ -98,11 +100,11 @@ glm::ivec2 HashTable::findGridPos(glm::dvec2 pos) const
     Statistics::TimerGuard findGridPosTimerGuard(findGridPosTimerID);
 
     glm::dvec2 dgrdPos = (pos-minPos_)*Kernel::SmoothingLength::dh;
+    if ( dgrdPos.x < 0. ) dgrdPos.x = 0.;
+    if ( dgrdPos.y < 0. ) dgrdPos.y = 0.;
     glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
-    while (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-    while (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-    while (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-    while (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
+    if ( gridPos.x >= int(gridSize_.x) ) gridPos.x = int(gridSize_.x);
+    if ( gridPos.y >= int(gridSize_.y) ) gridPos.y = int(gridSize_.y);
 
     return gridPos;
 }
@@ -134,10 +136,6 @@ void HashTable::findNei(ParticleCloud& cloud)
             const glm::dvec2 pos = particlePos[iPart];
             const glm::dvec2 dgrdPos = (pos-minPos_)*dh;
             glm::ivec2 gridPos = glm::ivec2(int(floor(dgrdPos.x)),int(floor(dgrdPos.y)));
-            if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-            else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-            if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-            else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
             particlesIn_(gridPos.x,gridPos.y).push_back(unsigned(iPart));
             particleGridPos[iPart] = gridPos;
@@ -155,16 +153,21 @@ void HashTable::findNei(ParticleCloud& cloud)
             const glm::ivec2 iGridPos = particleGridPos[iPart];
             auto& iNei = particleNei[iPart];
 
-            for (int iGrid=-1;iGrid<2;iGrid++)
+            auto iRange = boost::irange(
+                (iGridPos.x > 0) ? -1 : 0,
+                (iGridPos.x == int(gridSize_.x-1)) ? 1 : 2
+            );
+
+            auto jRange = boost::irange(
+                (iGridPos.y > 0) ? -1 : 0,
+                (iGridPos.y == int(gridSize_.y-1)) ? 1 : 2
+            );
+
+            for (int iGrid : iRange)
             {
-                for (int jGrid=-1;jGrid<2;jGrid++)
+                for (int jGrid : jRange)
                 {
                     glm::ivec2 gridPos = iGridPos + glm::ivec2(iGrid,jGrid);
-
-                    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-                    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-                    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-                    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
 
                     for ( unsigned neiPos : particlesIn_(gridPos.x,gridPos.y) ) {
                         const double dist2 = glm::length2(iPos - particlePos[neiPos]);
@@ -194,23 +197,27 @@ void HashTable::findNei(ParticleCloud& cloud)
 }
 
 //********************************************************************************
-std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos)
+std::vector<unsigned> HashTable::neiParticlesFor(glm::ivec2 gridPos) const
 //********************************************************************************
 {
-    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
-    return particlesIn_(gridPos.x,gridPos.y);
-}
+    std::vector<unsigned> ret;
 
-//********************************************************************************
-const std::vector<unsigned>& HashTable::neiParticlesFor(glm::ivec2 gridPos) const
-//********************************************************************************
-{
-    if      (gridPos.x<      0          ){ gridPos.x+=gridSize_.x; }
-    else if (gridPos.x>=int(gridSize_.x)){ gridPos.x-=gridSize_.x; }
-    if      (gridPos.y<      0          ){ gridPos.y+=gridSize_.y; }
-    else if (gridPos.y>=int(gridSize_.y)){ gridPos.y-=gridSize_.y; }
-    return particlesIn_(gridPos.x,gridPos.y);
+    auto iRange = boost::irange(
+        (gridPos.x > 0) ? -1 : 0,
+        (gridPos.x == int(gridSize_.x-1)) ? 1 : 2
+    );
+    auto jRange = boost::irange(
+        (gridPos.y > 0) ? -1 : 0,
+        (gridPos.y == int(gridSize_.y-1)) ? 1 : 2
+    );
+
+    for (int iGrid : iRange)
+    {
+        for (int jGrid : jRange)
+        {
+            glm::ivec2 sideGridPos = gridPos + glm::ivec2(iGrid,jGrid);
+            boost::push_back(ret, particlesIn_(sideGridPos.x,sideGridPos.y));
+        }
+    }
+    return ret;
 }

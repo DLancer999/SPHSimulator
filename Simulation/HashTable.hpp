@@ -59,9 +59,8 @@ public:
 
     void findNei(ParticleCloud& cloud);
 
-    //return particleList of given grid cell
-    std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos);
-    const std::vector<unsigned>& neiParticlesFor(glm::ivec2 gridPos) const;
+    //return particleList of particles around grid cell
+    std::vector<unsigned> neiParticlesFor(glm::ivec2 gridPos) const;
 };
 
 #endif
