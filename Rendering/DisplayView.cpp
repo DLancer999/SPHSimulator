@@ -17,6 +17,7 @@ License
 #include "DisplayView.hpp"
 #include "HardCodedShaders.hpp"
 #include "Simulation/Settings.hpp"
+#include "Util/ParallelFor.hpp"
 
 #define GLLogging 0
 
@@ -228,40 +229,39 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
     const auto& particlePos = cloud.get<Attr::ePosition>();
     const auto& particleVel = cloud.get<Attr::eVelocity>();
 
-    //update screen positions
     const size_t NParticles = cloud.size();
-    #pragma omp parallel for
-    for (size_t iPart = 0;iPart<NParticles;iPart++) 
-    {
-        sPosition_[iPart] = particlePos[iPart];
 
-        if (RenderSettings::displayRender==RenderSettings::INDEX)
-        {
-            float clr = float(iPart)/float(NParticles-1);
-            sColor_[iPart] = glm::vec3
-            (
-                clr,
-                clr,
-                clr
-            );
-        }
-        else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
-        {
-            float velMag = float(glm::length(particleVel[iPart]));
-            float scale = 0.2f;
-            //blue to white
-            sColor_[iPart] = glm::vec3
-            (
-                scale*velMag,
-                scale*velMag, 
-                scale*velMag*0.3f+0.7
-            );
-        }
-        else 
-        {
-            sColor_[iPart] = glm::vec3(0.0f);
-        }
-    }
+    //update screen positions
+    Parallel::For (NParticles, [this, &particlePos, &particleVel, NParticles](size_t iPart) { 
+      sPosition_[iPart] = particlePos[iPart];
+
+      if (RenderSettings::displayRender==RenderSettings::INDEX)
+      {
+        float clr = float(iPart)/float(NParticles-1);
+        sColor_[iPart] = glm::vec3
+        (
+            clr,
+            clr,
+            clr
+        );
+      }
+      else if (RenderSettings::displayRender==RenderSettings::SIMPLE)
+      {
+        float velMag = float(glm::length(particleVel[iPart]));
+        float scale = 0.2f;
+        //blue to white
+        sColor_[iPart] = glm::vec3
+        (
+          scale*velMag,
+          scale*velMag, 
+          scale*velMag*0.3f+0.7
+        );
+      }
+      else 
+      {
+        sColor_[iPart] = glm::vec3(0.0f);
+      }
+    });
 
     particleShader_.use();
     glBindVertexArray(VAO_);
@@ -294,44 +294,36 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
         if (RenderSettings::displayRender==RenderSettings::PRESSFORCES)
         {
             const auto& particlePressForce = cloud.get<Attr::ePressForce>();
-            #pragma omp parallel for
-            for (size_t iPart = 0;iPart<NParticles;iPart++) 
-            {
-                sForce_[iPart] = particlePressForce[iPart];
-            }
+            Parallel::For (NParticles, [ this, &particlePressForce ](size_t iPart) {
+              sForce_[iPart] = particlePressForce[iPart];
+            });
 
             glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::VISCFORCES)
         {
             const auto& particleViscForce = cloud.get<Attr::eViscForce>();
-            #pragma omp parallel for
-            for (size_t iPart = 0;iPart<NParticles;iPart++) 
-            {
-                sForce_[iPart] = particleViscForce[iPart];
-            }
+            Parallel::For (NParticles, [ this, &particleViscForce ](size_t iPart) {
+              sForce_[iPart] = particleViscForce[iPart];
+            });
 
             glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::SURFFORCES)
         {
             const auto& particleSurfForce = cloud.get<Attr::eSurfForce>();
-            #pragma omp parallel for
-            for (size_t iPart = 0;iPart<NParticles;iPart++) 
-            {
-                sForce_[iPart] = particleSurfForce[iPart];
-            }
+            Parallel::For (NParticles, [ this, &particleSurfForce ](size_t iPart) {
+              sForce_[iPart] = particleSurfForce[iPart];
+            });
 
             glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
         }
         else if (RenderSettings::displayRender==RenderSettings::OTHERFORCES)
         {
             const auto& particleOtherForce = cloud.get<Attr::eOtherForce>();
-            #pragma omp parallel for
-            for (size_t iPart = 0;iPart<NParticles;iPart++) 
-            {
-                sForce_[iPart] = particleOtherForce[iPart];
-            }
+            Parallel::For (NParticles, [ this, &particleOtherForce ](size_t iPart) {
+              sForce_[iPart] = particleOtherForce[iPart];
+            });
 
             glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
         }
@@ -339,11 +331,9 @@ bool DisplayView::WindowManager::renderParticles(const ParticleCloud& cloud)
         else if (RenderSettings::displayRender==RenderSettings::ALLFORCES)
         {
             const auto& particleTotalForce = cloud.get<Attr::eTotalForce>();
-            #pragma omp parallel for
-            for (size_t iPart = 0;iPart<NParticles;iPart++) 
-            {
-                sForce_[iPart] = particleTotalForce[iPart];
-            }
+            Parallel::For (NParticles, [ this, &particleTotalForce ](size_t iPart) {
+              sForce_[iPart] = particleTotalForce[iPart];
+            });
 
             glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
         }
