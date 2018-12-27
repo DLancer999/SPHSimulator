@@ -396,12 +396,11 @@ void SPHSolver::calcDensity()
 
     double dens = 0.0;
 
-    const unsigned Nnei = unsigned(iNei.size());
-    for (unsigned i = 0; i<Nnei;i++)
+    for (const Neigbhor& nei : iNei)
     {
-        unsigned jPart = iNei[i].ID;
+        unsigned jPart = nei.ID;
 
-        dens += particleMass[jPart]*Kernel::poly6::W(iNei[i].dist);
+        dens += particleMass[jPart]*Kernel::poly6::W(nei.dist);
     }
     dens*=Wcoeff;
 
@@ -473,13 +472,12 @@ void SPHSolver::calcNormal()
 
     glm::dvec2 norm (0.0);
 
-    unsigned Nnei = unsigned(iNei.size());
-    for (unsigned i = 0; i<Nnei;i++)
+    for (const Neigbhor& nei : iNei)
     {
-        unsigned jPart = iNei[i].ID;
+        unsigned jPart = nei.ID;
 
         norm += particleMass[jPart]*particleDDens[jPart]
-              *Kernel::poly6::gradW(iNei[i].dir,iNei[i].dist);
+              *Kernel::poly6::gradW(nei.dir, nei.dist);
     }
     norm *= Kernel::poly6::gradW_coeff()*Kernel::SmoothingLength::h;
     particleNormal[iPart] = norm;
@@ -626,16 +624,14 @@ void SPHSolver::calcPressForces()
     glm::dvec2 Fp = glm::dvec2(0.0);
     const double iPress = particlePress[iPart];
 
-    const unsigned Nnei = unsigned(iNei.size());
-    for (unsigned i = 0; i<Nnei;i++)
+    for (const Neigbhor& nei : iNei)
     {
-      const Neigbhor& iPartNeiI = iNei[i];
-      unsigned jPart = iPartNeiI.ID;
+      unsigned jPart = nei.ID;
       if (iPart==jPart) continue;
 
       Fp+=particleMass[jPart]*particleDDens[jPart]
          *(iPress + particlePress[jPart])
-         *Kernel::spiky::gradW(iPartNeiI.dir,iPartNeiI.dist);
+         *Kernel::spiky::gradW(nei.dir,nei.dist);
     }
 
     Fp*=-0.5*Kernel::spiky::gradW_coeff();
@@ -665,18 +661,15 @@ void SPHSolver::calcViscForces()
     glm::dvec2 iVel = particleVel[iPart];
     const auto& iNei = particleNei[iPart];
   
-    const unsigned Nnei = unsigned(iNei.size());
-    //std::cout<<"iPart= "<<iPart<<" nNei="<<Nnei;
-    for (unsigned i = 0; i<Nnei;i++)
+    for (const Neigbhor& nei : iNei)
     {
-      const Neigbhor& iPartNeiI = iNei[i];
-      unsigned jPart = iPartNeiI.ID;
+      unsigned jPart = nei.ID;
       if (iPart==jPart) continue;
   
       Fv+= particleMass[jPart]
          *particleDDens[jPart]
          *(particleVel[jPart]-iVel)
-         *Kernel::visc::laplW(iPartNeiI.dist);
+         *Kernel::visc::laplW(nei.dist);
     }
     Fv*=SPHSettings::viscosity*Kernel::visc::laplW_coeff();
   
@@ -709,11 +702,9 @@ void SPHSolver::calcSurfForces()
     const double iDens = particleDens[iPart];
     const auto&  iNei  = particleNei[iPart];
 
-    const unsigned Nnei = unsigned(iNei.size());
-    for (unsigned i = 0; i<Nnei;i++)
+    for (const Neigbhor& nei : iNei)
     {
-      const Neigbhor& iPartNeiI = iNei[i];
-      const unsigned jPart = iPartNeiI.ID;
+      const unsigned jPart = nei.ID;
       //std::cout<<" "<<jPart;
       if (iPart==jPart) continue;
 
@@ -721,8 +712,8 @@ void SPHSolver::calcSurfForces()
 
       Fcohesion+= correction
              *iMass*particleMass[jPart]
-             *Kernel::surface::C(iPartNeiI.dist)
-             *iPartNeiI.dir/iPartNeiI.dist;
+             *Kernel::surface::C(nei.dist)
+             *nei.dir/nei.dist;
 
       Fcurvature+= correction
              *iMass
