@@ -27,6 +27,12 @@ SourceFiles
 #define OPENMP_VAL 1
 #define TBB_VAL 2
 
+#if PARAMIMPL == TBB_VAL
+  #include "tbb/blocked_range.h"
+  #include "tbb/parallel_for.h"
+  #include "tbb/partitioner.h"
+#endif
+
 namespace Parallel
 {
   template <typename Functor>
@@ -41,7 +47,17 @@ namespace Parallel
       f(i);
     }
 #elif PARAMIMPL == TBB_VAL
-    static_assert(false, "TBB version not implemented"); 
+    auto blocked_f = [f](const tbb::blocked_range<size_t>& rng) {
+      size_t iEnd = rng.end();
+      for (size_t i = rng.begin(); i<iEnd; ++i)
+        f(i);
+    };
+    const size_t grainSize = std::max(rangeSize/64,size_t(128));
+    tbb::parallel_for(
+      tbb::blocked_range<size_t>(size_t{0}, rangeSize, grainSize),
+      blocked_f,
+      tbb::simple_partitioner{}
+    );
 #endif
   }
 }
