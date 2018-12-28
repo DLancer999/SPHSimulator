@@ -21,11 +21,7 @@ SourceFiles
 
 #include <cstdio>
 
-#define PARAMIMPL 1
-
-#define SERIAL_VAL 0
-#define OPENMP_VAL 1
-#define TBB_VAL 2
+#include "Definitions.hpp"
 
 #if PARAMIMPL == TBB_VAL
   #include "tbb/blocked_range.h"
