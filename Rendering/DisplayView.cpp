@@ -17,7 +17,7 @@ License
 #include "DisplayView.hpp"
 #include "HardCodedShaders.hpp"
 #include "Simulation/Settings.hpp"
-#include "Util/ParallelFor.hpp"
+#include "Parallel/For.hpp"
 
 #define GLLogging 0
 
