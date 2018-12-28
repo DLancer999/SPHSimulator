@@ -30,9 +30,9 @@ struct ParallelImpl
     Base::For(rangeSize, std::forward<Functor>(f));
   }
 
-  //static void readSettings() {
-  //  Base::readSettings();
-  //}
+  static void readSettings() {
+    Base::readSettings();
+  }
 };
 
 #endif

@@ -22,7 +22,7 @@ License
 #include "Util/ZValue.hpp"
 #include "Kernels.hpp"
 
-#include "Parallel/For.hpp"
+#include "Parallel/Parallel.hpp"
 
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/irange.hpp>

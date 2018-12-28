@@ -21,6 +21,7 @@ Description
 #include "Simulation/Settings.hpp"       
 #include "Rendering/WriteFunctions.hpp" 
 #include "Statistics/Statistics.hpp"     
+#include "Parallel/Parallel.hpp"     
 
 #define EnableGLRender 1
 
@@ -97,6 +98,7 @@ int main()
 {
     try
     {
+        Parallel::readSettings();
         SPHSettings::readSettings();
         SimulationSettings::readSettings();
         InitialConditions::readSettings();

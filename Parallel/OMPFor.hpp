@@ -21,6 +21,10 @@ SourceFiles
 
 #include <cstdio>
 #include <fstream>
+#include <thread>
+#include <iostream>
+#include <string>
+#include <omp.h>
 
 #include "ParallelImpl.hpp"
 #include <boost/program_options.hpp>
@@ -35,19 +39,29 @@ struct OMPFor : public ParallelImpl<OMPFor>
     }
   }
 
-  //static void readSettings() {
-  //  size_t nThreads;
-  //  std::ifstream Config_File("ParallelConfig.ini");
+  static void readSettings() {
+    int nThreads = 0;
+    std::ifstream Config_File("ParallelConfig.ini");
 
-  //  using namespace boost::program_options;
-  //  options_description SimSet("Settings");
-  //  SimSet.add_options()
-  //      ("ParallelSettings.nThreads", value<size_t>(&nThreads));
-  //  
-  //  variables_map vm;
-  //  store(parse_config_file(Config_File, SimSet), vm);
-  //  notify(vm);
-  //}
+    using namespace boost::program_options;
+    options_description SimSet("Settings");
+    SimSet.add_options()
+        ("ParallelSettings.nThreads", value<int>(&nThreads));
+    
+    variables_map vm;
+    store(parse_config_file(Config_File, SimSet), vm);
+    notify(vm);
+
+    if (!nThreads) {
+      nThreads = static_cast<int>(std::thread::hardware_concurrency());
+      if (!nThreads) {
+        std::cerr<<"Hardware_concurrency method failed!!"<<std::endl;
+        nThreads = 1;
+      }
+    }
+
+    omp_set_num_threads(nThreads);
+  }
 };
 
 #endif

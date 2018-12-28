@@ -16,8 +16,8 @@ SourceFiles
 
 \************************************************************************/
 
-#ifndef ParallelFor_H
-#define ParallelFor_H
+#ifndef Parallel_H
+#define Parallel_H
 
 #include "Definitions.hpp"
 

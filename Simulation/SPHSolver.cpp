@@ -21,7 +21,7 @@ License
 #include "Reorderer.hpp"
 #include "Statistics/Statistics.hpp"
 
-#include "Parallel/For.hpp"
+#include "Parallel/Parallel.hpp"
 
 #include <boost/range/combine.hpp>
 #include <boost/range/algorithm/for_each.hpp>

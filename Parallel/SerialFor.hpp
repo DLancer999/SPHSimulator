@@ -31,6 +31,10 @@ struct SerialFor : public ParallelImpl<SerialFor>
       f(i);
     }
   }
+
+  static void readSettings() {
+    //nothing to setup
+  }
 };
 
 #endif

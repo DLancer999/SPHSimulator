@@ -47,11 +47,17 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OPTFLAGS} ${LINKFLAGS} $
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 include_directories(.)
-add_subdirectory(./Simulation)
+add_subdirectory(./Parallel)
 add_subdirectory(./Rendering)
+add_subdirectory(./Simulation)
 add_subdirectory(./Statistics)
 
-set(SimulatorComponents "Simulator" "GlRenderer" "TimerUtil")
+set(SimulatorComponents
+  "GlRenderer"
+  "Parallel"
+  "Simulator"
+  "TimerUtil"
+)
 
 add_executable(SPHSimulator "SPHSimulator.cpp")
 target_link_libraries (SPHSimulator ${SimulatorComponents} ${Boost_PROGRAM_OPTIONS_LIBRARIES} TBB::tbb)
