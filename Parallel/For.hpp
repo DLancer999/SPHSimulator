@@ -19,43 +19,24 @@ SourceFiles
 #ifndef ParallelFor_H
 #define ParallelFor_H
 
-#include <cstdio>
-
 #include "Definitions.hpp"
 
-#if PARAMIMPL == TBB_VAL
-  #include "tbb/blocked_range.h"
-  #include "tbb/parallel_for.h"
-  #include "tbb/partitioner.h"
+#if PARAMIMPL == SERIAL_VAL
+  #include "SerialFor.hpp"
+#elif PARAMIMPL == OPENMP_VAL
+  #include "OMPFor.hpp"
+#elif PARAMIMPL == TBB_VAL
+  #include "TBBFor.hpp"
 #endif
 
-namespace Parallel
-{
-  template <typename Functor>
-  void For(size_t rangeSize, Functor f) {
 #if PARAMIMPL == SERIAL_VAL
-    for (size_t i=0; i<rangeSize; ++i) {
-      f(i);
-    }
+using ForType = SerialFor;
 #elif PARAMIMPL == OPENMP_VAL
-    #pragma omp parallel for
-    for (size_t i=0; i<rangeSize; ++i) {
-      f(i);
-    }
+using ForType = OMPFor;
 #elif PARAMIMPL == TBB_VAL
-    auto blocked_f = [f](const tbb::blocked_range<size_t>& rng) {
-      size_t iEnd = rng.end();
-      for (size_t i = rng.begin(); i<iEnd; ++i)
-        f(i);
-    };
-    const size_t grainSize = std::max(rangeSize/64,size_t(128));
-    tbb::parallel_for(
-      tbb::blocked_range<size_t>(size_t{0}, rangeSize, grainSize),
-      blocked_f,
-      tbb::simple_partitioner{}
-    );
+using ForType = TBBFor;
 #endif
-  }
-}
+
+using Parallel = ParallelImpl<ForType>;
 
 #endif
