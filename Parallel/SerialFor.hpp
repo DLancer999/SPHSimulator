@@ -23,7 +23,7 @@ SourceFiles
 
 #include "ParallelImpl.hpp"
 
-struct SerialFor : public ParallelImpl<SerialFor>
+struct SerialFor : private ParallelImpl<SerialFor>
 {
   template <typename Functor>
   static void For(size_t rangeSize, Functor f) {

@@ -29,7 +29,7 @@ SourceFiles
 #include "ParallelImpl.hpp"
 #include <boost/program_options.hpp>
 
-struct OMPFor : public ParallelImpl<OMPFor>
+struct OMPFor : private ParallelImpl<OMPFor>
 {
   template <typename Functor>
   static void For(size_t rangeSize, Functor f) {

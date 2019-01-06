@@ -21,6 +21,13 @@ SourceFiles
 
 #include <cstdio>
 #include <utility>
+#include <type_traits>
+
+namespace detail
+{
+  template <typename DERIVED, typename BASE>
+  constexpr bool isPrivateInherited = !std::is_convertible_v<DERIVED*, BASE*>;
+}
 
 template <typename Base>
 struct ParallelImpl
@@ -32,6 +39,10 @@ struct ParallelImpl
 
   static void readSettings() {
     Base::readSettings();
+  }
+
+  constexpr static bool checkInheritance() {
+    return detail::isPrivateInherited<Base, ParallelImpl>;
   }
 };
 

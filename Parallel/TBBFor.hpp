@@ -31,7 +31,7 @@ SourceFiles
 #include "ParallelImpl.hpp"
 #include <boost/program_options.hpp>
 
-struct TBBFor : public ParallelImpl<TBBFor>
+struct TBBFor : private ParallelImpl<TBBFor>
 {
   template <typename Functor>
   static void For(size_t rangeSize, Functor f) {

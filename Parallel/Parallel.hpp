@@ -38,5 +38,9 @@ using ForType = TBBFor;
 #endif
 
 using Parallel = ParallelImpl<ForType>;
+//This static assert forces ForType to inherit privatly from ParallelImpl.
+//This is needed to ensure that ParallelImpl interface functions are properly overriden by ForType,
+//otherwise a "function is private" compile time error is issued.
+static_assert(Parallel::checkInheritance(),"ForType does not inherit privately from ParallelImpl");
 
 #endif
